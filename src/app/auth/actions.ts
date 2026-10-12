@@ -103,7 +103,33 @@ export async function updatePassword(_prev: FormState, formData: FormData): Prom
   if (password.length < 8) return { error: "Please choose a password with at least 8 characters." };
 
   const supabase = await client();
+  if (await isDemoUser(supabase)) return { error: "The demo account's password can't be changed." };
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { error: friendly(error.message) };
+  redirect("/app");
+}
+
+type Client = NonNullable<Awaited<ReturnType<typeof createClient>>>;
+
+/** True when the signed-in parent is one of the shared demo accounts. */
+async function isDemoUser(supabase: Client) {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return false;
+  const { data } = await supabase.from("profiles").select("is_demo").eq("id", auth.user.id).maybeSingle();
+  return Boolean(data?.is_demo);
+}
+
+/**
+ * "Try the demo": signs the visitor in as Kata Molnár, the shared demo parent.
+ * The credentials live only in server environment variables, never in the browser.
+ */
+export async function tryDemo() {
+  const email = process.env.DEMO_EMAIL;
+  const password = process.env.DEMO_PASSWORD;
+  if (!email || !password) redirect("/login?error=demo");
+
+  const supabase = await client();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) redirect("/login?error=demo");
   redirect("/app");
 }

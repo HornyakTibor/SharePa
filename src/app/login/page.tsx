@@ -8,7 +8,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   const { next, error } = await searchParams;
   return (
     <AuthShell title="Log in" lead="Welcome back.">
-      <LoginForm next={next} linkError={error === "link"} />
+      <LoginForm next={next} error={error} />
     </AuthShell>
   );
 }

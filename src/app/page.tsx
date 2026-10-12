@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { HeroCarousel } from "@/components/site/HeroCarousel";
 import { CtaBand } from "@/components/site/CtaBand";
+import { DemoButton } from "@/components/auth/DemoButton";
 import { Arrow, Check, Download, Globe, People, Shield } from "@/components/site/icons";
 
 import illOneApp from "../../public/images/site/ill-one-app.png";
@@ -105,12 +106,9 @@ export default function Home() {
                 >
                   Try it for free <Arrow />
                 </Link>
-                <Link
-                  href="#advantages"
-                  className="btn-lift inline-flex min-h-14 items-center rounded-full bg-white px-[26px] text-[17px] font-semibold text-navy no-underline hover:bg-p100 hover:text-p600"
-                >
-                  See how it works
-                </Link>
+                <DemoButton className="btn-lift inline-flex min-h-14 cursor-pointer items-center rounded-full border-0 bg-white px-[26px] text-[17px] font-semibold text-navy hover:bg-p100 hover:text-p600">
+                  Try the demo
+                </DemoButton>
               </div>
               <ul className="m-0 flex list-none flex-wrap gap-5 p-0 text-sm font-medium text-body">
                 {["Free for the first 100 users", "No credit card needed", "Data stored in the EU"].map((t) => (

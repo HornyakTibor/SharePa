@@ -34,6 +34,15 @@ users (parents), children, events (category + activity), places / pick-up points
 - `src/middleware.ts` refreshes the session, sends logged-out visitors from `/app/*` to `/login?next=…`, and logged-in ones from `/login`/`/signup` to `/app`.
 - The app lives under `/app` (logged in only). Google / Microsoft sign-in to add later.
 
+## Database (Supabase)
+- Migrations in `supabase/migrations/` (applied to the live project). Tables: profiles (auto-created on sign-up), children, friendships (one row per direction, owner's labels), events (weekly: weekday 0=Mon + start_time), event_children, rides (per event date + driver), ride_passengers. RLS on all; helpers `is_friend`, `can_see_event`, `can_see_ride`.
+- Home data is loaded in `src/lib/data/home.ts` with the parent's own session (RLS decides visibility). Dates are Budapest-time ISO strings (`src/lib/dates.ts`).
+
+## Demo mode
+- Demo family: Kata Molnár (`demo@sharepa.tiborhornyak.hu`) + 7 friends (`*@demo.sharepa.tiborhornyak.hu`), `profiles.is_demo = true`. `public.reset_demo()` rebuilds it; pg_cron job `reset-demo-family` runs 02:00 UTC. One-time setup script: `supabase/run-once-demo-family.sql`.
+- "Try the demo" (`tryDemo` server action) signs in with `DEMO_EMAIL` / `DEMO_PASSWORD` (Vercel env, server-only). Demo accounts can't change their password.
+- `/api/keep-alive` is hit daily by Vercel Cron (`vercel.json`) so the free Supabase project never pauses.
+
 ## Way of working
 - One feature per branch / pull request. Plan first, then build. Keep this file updated with decisions.
 - `npm run build` and `npm run lint` must pass before opening a pull request.

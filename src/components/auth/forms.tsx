@@ -7,9 +7,14 @@ import { Field, FormMessage, SubmitButton } from "@/components/ui/form";
 
 const link = "font-semibold text-p500 hover:text-p600";
 
-export function LoginForm({ next, linkError }: { next?: string; linkError?: boolean }) {
+export function LoginForm({ next, error }: { next?: string; error?: string }) {
   const [state, action] = useActionState<FormState, FormData>(signIn, {
-    error: linkError ? "That link has expired or was already used. Please log in, or request a new link." : undefined,
+    error:
+      error === "link"
+        ? "That link has expired or was already used. Please log in, or request a new link."
+        : error === "demo"
+          ? "The demo couldn't open right now. Please try again in a minute."
+          : undefined,
   });
   return (
     <form action={action} className="flex flex-col gap-4">
