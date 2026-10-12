@@ -28,3 +28,60 @@ body {
   background: var(--color-canvas);
   color: var(--color-ink);
 }
+
+/* ---------- Marketing website (from the SharePa one-pager design) ---------- */
+@theme {
+  --color-body: #4a5468;
+  --color-lilac: #efedf7;
+  --color-lilac-2: #cfc4ef;
+  --color-mist: #ece9f6;
+  --color-cream: #f7f3c7;
+  --color-olive: #5c5410;
+  --color-on-dark: #c9c1e6;
+  --color-on-dark-2: #a99fd0;
+  --color-lavender: #b9a8ec;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+.btn-lift {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.btn-lift:hover {
+  transform: translateY(-1px);
+}
+
+/* Advantage illustrations come alive while the card is hovered or focused */
+.ill {
+  transform-origin: 50% 60%;
+  will-change: transform;
+}
+.ill-ring {
+  transform-origin: 50% 20%;
+}
+@keyframes spFloat { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-7px) } }
+@keyframes spBreathe { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.045) } }
+@keyframes spDrift { 0%, 100% { transform: translateX(0) } 50% { transform: translateX(6px) } }
+@keyframes spTick { 0%, 100% { transform: rotate(0) } 30% { transform: rotate(-2.5deg) } 70% { transform: rotate(2.5deg) } }
+@keyframes spSway { 0%, 100% { transform: translateY(0) rotate(0) } 50% { transform: translateY(-5px) rotate(-1.5deg) } }
+@keyframes spRing { 0%, 100% { transform: rotate(0) } 20% { transform: rotate(3deg) } 40% { transform: rotate(-3deg) } 60% { transform: rotate(1.5deg) } 80% { transform: rotate(-1deg) } }
+article:is(:hover, :focus-within) .ill[data-motion="float"] { animation: spFloat 2.6s ease-in-out infinite; }
+article:is(:hover, :focus-within) .ill[data-motion="breathe"] { animation: spBreathe 2.8s ease-in-out infinite; }
+article:is(:hover, :focus-within) .ill[data-motion="drift"] { animation: spDrift 3s ease-in-out infinite; }
+article:is(:hover, :focus-within) .ill[data-motion="tick"] { animation: spTick 2.4s ease-in-out infinite; }
+article:is(:hover, :focus-within) .ill[data-motion="sway"] { animation: spSway 2.8s ease-in-out infinite; }
+article:is(:hover, :focus-within) .ill[data-motion="ring"] { animation: spRing 2.5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .ill { animation: none !important; }
+}
+
+/* Legal page typography */
+.legal h2 { margin: 1.5rem 0 0; font-size: 20px; font-weight: 700; color: var(--color-navy); }
+.legal ul { margin: 0; padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.legal a { color: var(--color-p500); }
+.legal p { margin: 0; }

@@ -27,6 +27,11 @@ This build is a **portfolio demo** for job interviews and business partners, own
 ## Data model (to build)
 users (parents), children, events (category + activity), places / pick-up points, friendships + friend labels, invites, rides (driver, free seats, status), ride passengers, notifications. Row-level security on every table: parents see only their own data and events friends share with them. Children never get accounts.
 
+## Site structure
+- `/` marketing website (built from the SharePa one-pager design; components in `src/components/site/`). Log in → `/login`, Try it for free → `/signup`.
+- `/privacy`, `/terms`, `/imprint` — draft legal pages (operator: Thalassa Consulting Kft.), pending Legal Lead review; placeholders in [BRACKETS].
+- The app itself lives behind login (to build: `/app/...`).
+
 ## Way of working
 - One feature per branch / pull request. Plan first, then build. Keep this file updated with decisions.
 - `npm run build` and `npm run lint` must pass before opening a pull request.
