@@ -46,7 +46,8 @@ const SLIDES: Slide[] = [
   },
 ];
 
-const fade = "transition-[opacity,transform] duration-[1600ms] ease-in-out";
+// Tailwind v4 moves elements with the CSS `translate` property, so that is what must be animated (not `transform`).
+const fade = "transition-[opacity,translate] duration-[1600ms] ease-in-out";
 
 export function HeroCarousel() {
   const [idx, setIdx] = useState(0);
