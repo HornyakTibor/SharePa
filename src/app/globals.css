@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* SharePa design tokens (see docs/sharepa-notes.md) */
+@theme {
+  --color-p100: #e3def7;
+  --color-p200: #beb1ed;
+  --color-p300: #9b85e2;
+  --color-p400: #7b57d4;
+  --color-p500: #5833a7;
+  --color-p600: #341c67;
+  --color-p700: #150830;
+  --color-pink: #b77692;
+  --color-yellow: #dcce40;
+  --color-navy: #1a3453;
+  --color-canvas: #f3f3f5;
+  --color-ink: #0a0f1c;
+  --color-ink-2: #383f49;
+  --color-ink-3: #6d6f77;
+  --color-ok: #287d3c;
+  --color-ok-bg: #edf9f0;
+  --color-err: #da1414;
+  --color-err-bg: #feefef;
+  --font-sans: var(--font-montserrat), system-ui, sans-serif;
+  --font-mono: var(--font-roboto-mono), ui-monospace, monospace;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
