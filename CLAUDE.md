@@ -30,7 +30,9 @@ users (parents), children, events (category + activity), places / pick-up points
 ## Site structure
 - `/` marketing website (built from the SharePa one-pager design; components in `src/components/site/`). Log in → `/login`, Try it for free → `/signup`.
 - `/privacy`, `/terms`, `/imprint` — draft legal pages (operator: Thalassa Consulting Kft.), pending Legal Lead review; placeholders in [BRACKETS].
-- The app itself lives behind login (to build: `/app/...`).
+- Auth (Supabase email + password): `/login`, `/signup`, `/forgot-password`, `/reset-password`; email links land on `/auth/callback`. Server actions in `src/app/auth/actions.ts`; forms in `src/components/auth/`.
+- `src/middleware.ts` refreshes the session, sends logged-out visitors from `/app/*` to `/login?next=…`, and logged-in ones from `/login`/`/signup` to `/app`.
+- The app lives under `/app` (logged in only). Google / Microsoft sign-in to add later.
 
 ## Way of working
 - One feature per branch / pull request. Plan first, then build. Keep this file updated with decisions.
