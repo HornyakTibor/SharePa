@@ -14,18 +14,19 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Home – SharePa" };
 
-export default async function AppHome({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
-  const { view } = await searchParams;
+export default async function AppHome({ searchParams }: { searchParams: Promise<{ view?: string; offers?: string }> }) {
+  const { view, offers } = await searchParams;
   const supabase = await createClient();
   const { data: auth } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
   if (!supabase || !auth.user) redirect("/login?next=/app");
 
   const data = await loadHome(supabase, auth.user.id);
+  data.openOffers = offers;
   const first = data.me.name.split(" ")[0];
 
   return (
     <div className="min-h-screen bg-canvas">
-      <AppHeader name={data.me.name} />
+      <AppHeader name={data.me.name} notifications={data.notifications} />
       <main className="mx-auto flex max-w-[1232px] flex-col gap-6 px-4 pt-8 pb-24 sm:px-8">
         {data.me.isDemo && (
           <div role="note" className="flex flex-wrap items-center gap-3 rounded-[20px] bg-[linear-gradient(95deg,#150830_0%,#341C67_50%,#5833A7_100%)] px-5 py-4 text-white">

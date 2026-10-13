@@ -68,22 +68,7 @@ export async function saveRideChoice(input: RideChoiceInput): Promise<ActionResu
     if (!TIME.test(pickupTime)) return { ok: false, error: "Enter a pick-up time, like 16:00." };
   }
 
-  const { error: choiceError } = await supabase.from("ride_choices").upsert(
-    {
-      event_id: eventId,
-      ride_date: date,
-      parent_id: uid,
-      mode,
-      child_ids: mode === "join" ? childIds : [],
-      notified_ids: mode === "none" ? [] : notifiedIds,
-      note: mode === "none" ? null : note,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "event_id,ride_date,parent_id" },
-  );
-  if (choiceError) return { ok: false, error: "Your choice couldn't be saved. Please try again." };
-
-  // The parent's own ride offer follows the choice.
+  // The parent's own ride offer follows the choice. It is saved first, so the note friends get includes it.
   const { data: mine } = await supabase
     .from("rides")
     .select("id")
@@ -103,8 +88,83 @@ export async function saveRideChoice(input: RideChoiceInput): Promise<ActionResu
     await supabase.from("rides").update({ status: "cancelled" }).eq("id", mine.id);
   }
 
+  const { error: choiceError } = await supabase.from("ride_choices").upsert(
+    {
+      event_id: eventId,
+      ride_date: date,
+      parent_id: uid,
+      mode,
+      child_ids: mode === "join" ? childIds : [],
+      notified_ids: mode === "none" ? [] : notifiedIds,
+      note: mode === "none" ? null : note,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "event_id,ride_date,parent_id" },
+  );
+  if (choiceError) return { ok: false, error: "Your choice couldn't be saved. Please try again." };
+
   revalidatePath("/app");
   if (mode === "none") return { ok: true, message: "Marked: no ride needed" };
   const sent = notifiedIds.length ? `Note sent to ${plural(notifiedIds.length, "parent")}` : "Saved";
   return { ok: true, message: mode === "drive" ? `${sent} · you're driving with ${plural(seats, "free seat")}` : `${sent} · ride requested` };
+}
+
+async function session() {
+  const supabase = await createClient();
+  if (!supabase) return null;
+  const { data } = await supabase.auth.getUser();
+  return data.user ? { supabase, uid: data.user.id } : null;
+}
+
+/** The event owner approves one driving offer. The database confirms it and tells everyone involved. */
+export async function acceptOffer(rideId: string): Promise<ActionResult> {
+  if (!UUID.test(rideId)) return { ok: false, error: "Something went wrong. Please reload the page." };
+  const s = await session();
+  if (!s) return { ok: false, error: "Please log in again." };
+  const { data, error } = await s.supabase.rpc("accept_ride_offer", { p_ride: rideId });
+  if (error) return { ok: false, error: error.message.includes("no longer open") ? "This offer is no longer open." : "The offer couldn't be approved. Please try again." };
+  revalidatePath("/app");
+  return { ok: true, message: `Ride approved · ${String(data).split(" ")[0]} will drive` };
+}
+
+/** "I can drive": a friend answers a ride request from their notifications. */
+export async function offerFromRequest(notificationId: string): Promise<ActionResult> {
+  if (!UUID.test(notificationId)) return { ok: false, error: "Something went wrong. Please reload the page." };
+  const s = await session();
+  if (!s) return { ok: false, error: "Please log in again." };
+
+  const { data: n } = await s.supabase
+    .from("notifications")
+    .select("kind, event_id, ride_date, actor_id")
+    .eq("id", notificationId)
+    .maybeSingle();
+  if (!n || n.kind !== "request" || !n.event_id || !n.ride_date) return { ok: false, error: "This request is no longer available." };
+  if (n.ride_date < today()) return { ok: false, error: "This event is already over." };
+
+  const [{ data: ev }, { data: req }] = await Promise.all([
+    s.supabase.from("events").select("start_time").eq("id", n.event_id).maybeSingle(),
+    s.supabase.from("ride_choices").select("child_ids").eq("event_id", n.event_id).eq("ride_date", n.ride_date).eq("parent_id", n.actor_id).maybeSingle(),
+  ]);
+  if (!ev) return { ok: false, error: "This request is no longer available." };
+
+  const [h, m] = String(ev.start_time).split(":").map(Number);
+  const t = (h * 60 + m - 30 + 1440) % 1440;
+  const pickupTime = `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+  const seats = Math.max(1, Math.min(8, req?.child_ids?.length ?? 1));
+
+  const { error } = await s.supabase.from("rides").upsert(
+    { event_id: n.event_id, ride_date: n.ride_date, driver_id: s.uid, seats, pickup: "At your home", pickup_time: pickupTime, status: "offered" },
+    { onConflict: "event_id,ride_date,driver_id" },
+  );
+  if (error) return { ok: false, error: "Your offer couldn't be sent. Please try again." };
+  revalidatePath("/app");
+  return { ok: true, message: "Offer sent · they'll see it right away" };
+}
+
+/** Marks every notification as read when the parent opens the bell. */
+export async function markNotificationsRead(): Promise<void> {
+  const s = await session();
+  if (!s) return;
+  await s.supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("recipient_id", s.uid).is("read_at", null);
+  revalidatePath("/app");
 }

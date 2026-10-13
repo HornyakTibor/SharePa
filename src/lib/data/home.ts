@@ -35,8 +35,21 @@ export type Occurrence = {
   ride: Ride | null;
   /** The parent's own offered ride, if they drive. */
   myRide: Ride | null;
+  /** Open driving offers from friends, waiting for approval. */
+  offers: Ride[];
   choice: RideChoice | null;
   past: boolean;
+};
+
+export type Notification = {
+  id: string;
+  kind: "request" | "seats" | "offer" | "confirmed" | "declined";
+  title: string;
+  body: string;
+  createdAt: string;
+  read: boolean;
+  eventId: string | null;
+  rideDate: string | null;
 };
 
 export type HomeData = {
@@ -48,6 +61,9 @@ export type HomeData = {
   friends: Friend[];
   activities: { label: string; category: string | null; perWeek: number }[];
   ridesPerChild: Record<string, number>;
+  notifications: Notification[];
+  /** "eventId_date" of an offers dialog to open on load (from a notification link). */
+  openOffers?: string;
 };
 
 const UPCOMING_DAYS = 14;
@@ -60,7 +76,7 @@ export async function loadHome(supabase: SupabaseClient, userId: string): Promis
   const rangeEnd = addDays(now, UPCOMING_DAYS - 1);
   const ridesFrom = weekStart < now ? weekStart : now;
 
-  const [profileRes, childrenRes, eventsRes, friendsRes] = await Promise.all([
+  const [profileRes, childrenRes, eventsRes, friendsRes, notifRes] = await Promise.all([
     supabase.from("profiles").select("full_name, is_demo, address").eq("id", userId).maybeSingle(),
     supabase.from("children").select("id, name").eq("parent_id", userId).order("name"),
     supabase
@@ -72,6 +88,12 @@ export async function loadHome(supabase: SupabaseClient, userId: string): Promis
       .from("friendships")
       .select("labels, friend:profiles!friendships_friend_id_fkey(id, full_name)")
       .eq("user_id", userId),
+    supabase
+      .from("notifications")
+      .select("id, kind, title, body, created_at, read_at, event_id, ride_date")
+      .eq("recipient_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(30),
   ]);
 
   const events: EventRow[] = (eventsRes.data ?? []).map((e) => ({
@@ -137,6 +159,7 @@ export async function loadHome(supabase: SupabaseClient, userId: string): Promis
       date,
       ride: event.needs_ride ? rideFor(event.id, date) : null,
       myRide,
+      offers: rides.filter((r) => r.event_id === event.id && r.ride_date === date && r.driver_id !== userId && r.status === "offered"),
       choice,
       past: date < now || (date === now && event.start_time.slice(0, 5) < time),
     };
@@ -193,5 +216,15 @@ export async function loadHome(supabase: SupabaseClient, userId: string): Promis
       .sort((a, b) => a.name.localeCompare(b.name, "hu")),
     activities: [...actMap.values()].sort((a, b) => a.label.localeCompare(b.label)),
     ridesPerChild,
+    notifications: (notifRes.data ?? []).map((n) => ({
+      id: n.id,
+      kind: n.kind,
+      title: n.title,
+      body: n.body,
+      createdAt: n.created_at,
+      read: Boolean(n.read_at),
+      eventId: n.event_id,
+      rideDate: n.ride_date,
+    })),
   };
 }
