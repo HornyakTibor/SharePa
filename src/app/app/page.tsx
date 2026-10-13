@@ -7,13 +7,15 @@ import { AppHeader } from "@/components/app/AppHeader";
 import { WeekCalendar } from "@/components/app/WeekCalendar";
 import { RidesCard } from "@/components/app/RidesCard";
 import { Panels } from "@/components/app/Panels";
+import { HomeViews } from "@/components/app/HomeViews";
 
 // Always render per request: the page depends on who is logged in.
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Home – SharePa" };
 
-export default async function AppHome() {
+export default async function AppHome({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+  const { view } = await searchParams;
   const supabase = await createClient();
   const { data: auth } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
   if (!supabase || !auth.user) redirect("/login?next=/app");
@@ -37,8 +39,15 @@ export default async function AppHome() {
           <p className="m-0 text-xs font-semibold uppercase tracking-[.08em] text-ink-3">{longDate(data.today)}</p>
           <h1 className="mt-1 mb-0 text-[31px] font-semibold text-navy">Hi {first}</h1>
         </div>
-        <WeekCalendar data={data} />
-        <RidesCard data={data} />
+        {data.week.some((d) => d.items.length) ? (
+          <HomeViews
+            initial={view === "list" ? "list" : "cal"}
+            calendar={<WeekCalendar data={data} />}
+            list={<RidesCard data={data} />}
+          />
+        ) : (
+          <WeekCalendar data={data} />
+        )}
         <Panels data={data} />
       </main>
     </div>

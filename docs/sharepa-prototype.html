@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>SharePa Prototype</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -760,7 +760,7 @@ canvas.qr{border-radius:var(--r-md)}
 @media (prefers-reduced-motion:reduce){.notif.fresh{animation:none}}
 .notif.k-join{--nf:#150830}
 .notif.k-done{--nf:#1b5e20}
-.notif.k-miss{--nf:#8e1b1b}
+.notif.k-miss,.notif.k-decl{--nf:#8e1b1b}
 .notif .nic{flex:none;width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--nf);color:#fff}
 .notif .nic .ic{width:20px;height:20px;fill:currentColor}
 .notif .nbody{min-width:0;flex:1}
@@ -781,7 +781,15 @@ canvas.qr{border-radius:var(--r-md)}
 .simn{display:flex;align-items:center;gap:10px;text-align:left;padding:8px 10px;border-radius:12px;border:0;background:var(--surface-2);font:500 13px var(--f-ui);color:var(--text);cursor:pointer}
 .simn:hover{background:var(--tint)}
 .simn i{width:16px;height:16px;border-radius:5px;background:var(--accent);border:3px solid var(--nf);flex:none}
-.simn.k-join{--nf:#150830}.simn.k-done{--nf:#1b5e20}.simn.k-miss{--nf:#8e1b1b}
+.simn.k-join{--nf:#150830}.simn.k-done{--nf:#1b5e20}.simn.k-miss,.simn.k-decl{--nf:#8e1b1b}
+
+/* home view tabs */
+.viewtabs{display:inline-flex;gap:4px;padding:4px;margin:4px 0 14px;background:var(--surface);border-radius:999px;box-shadow:var(--sh-card)}
+.viewtabs button{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border:0;border-radius:999px;background:transparent;color:var(--text-3);font:600 14px var(--f-ui);cursor:pointer}
+.viewtabs button .ic{width:18px;height:18px;fill:currentColor}
+.viewtabs button:hover{color:var(--accent-text);background:var(--tint)}
+.viewtabs button.on{background:var(--accent);color:#fff;box-shadow:0 6px 16px -8px color-mix(in srgb,var(--accent) 80%,transparent)}
+.viewtabs+.rides{margin-top:0}
 </style>
 
 <button class="flowbtn" data-act="toggleRail" aria-expanded="false" aria-controls="railbox"><svg class="ic" viewBox="0 0 24 24"><path d="M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3z"/></svg>Flow map</button>
@@ -794,7 +802,8 @@ canvas.qr{border-radius:var(--r-md)}
   <div class="simnotif"><b>Simulate notifications</b>
     <button class="simn k-join" data-act="notify" data-k="join"><i></i>Someone joined your ride</button>
     <button class="simn k-done" data-act="notify" data-k="done"><i></i>Your kid got a ride · event organized</button>
-    <button class="simn k-miss" data-act="notify" data-k="miss"><i></i>Upcoming event without a ride</button></div>
+    <button class="simn k-miss" data-act="notify" data-k="miss"><i></i>Upcoming event without a ride</button>
+    <button class="simn k-decl" data-act="notify" data-k="decl"><i></i>Driver declined · reorganize</button></div>
   <section class="notes" id="notes" aria-label="Board notes"></section>
 </aside>
 <main class="frame"><span id="url" hidden></span><div id="nav"></div><div class="screen" id="screen"></div></main>
@@ -913,6 +922,7 @@ const ICONS={
   bell:'<path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>',
   check:'<path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>',
   warn:'<path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>',
+  list:'<path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>',
   mail:'<path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/>'
 };
 const LOGOS={
@@ -1161,8 +1171,8 @@ V.home=()=>{
     <div><div class="eyebrow">${fmt(TODAY)} ${TODAY.getFullYear()}</div><h2>Hi ${esc(S.me.name.split(" ")[0])}</h2></div>
 </div>
   ${setup}
-  ${dashCal()}
-  ${ridesSection()}
+  ${S.events.length?`<div class="viewtabs" role="tablist" aria-label="Home view">${[["cal","cal","Calendar view"],["list","list","List view"]].map(([k,i,l])=>`<button role="tab" class="${(S.homeTab||"cal")===k?"on":""}" aria-selected="${(S.homeTab||"cal")===k}" data-act="homeTab" data-k="${k}">${ic(i)}${l}</button>`).join("")}</div>`:""}
+  ${!S.events.length||(S.homeTab||"cal")==="cal"?dashCal():ridesSection()}
   <div class="panels">${friends}${kids}${acts}</div>`;
 };
 
@@ -1738,11 +1748,12 @@ const A={
   flToggle(el){const f=S.friends.find(x=>x.id===el.dataset.id),l=el.dataset.l;f.labels=f.labels.includes(l)?f.labels.filter(x=>x!==l):[...f.labels,l];render()},
   flRm(el){const f=S.friends.find(x=>x.id===el.dataset.id);f.labels=f.labels.filter(x=>x!==el.dataset.l);render()},
   obFl(el){const f=S.friends.find(x=>x.id===el.dataset.id),l=el.dataset.l;f.labels=f.labels.includes(l)?f.labels.filter(x=>x!==l):[...f.labels,l];render()},
+  homeTab(el){S.homeTab=el.dataset.k;S.rideMenu=null;render()},
   notify(el){simNotif(el.dataset.k)},
   notifClose(el){S.notifs=(S.notifs||[]).filter(n=>n.id!==el.dataset.n);renderNotifs()},
   notifOpen(el){const n=(S.notifs||[]).find(x=>x.id===el.dataset.n);if(!n)return;S.notifs=S.notifs.filter(x=>x!==n);
-    S.user=true;S.onboarded=true;S.calDate=new Date(n.d);S.calMode="day";go("home");const cb=$(".calbox");cb&&cb.scrollIntoView({block:"start"});
-    if(n.k==="miss")A.rsvp({dataset:{id:n.e.id,d:n.d.toISOString(),m:"join"}})},
+    S.user=true;S.onboarded=true;S.homeTab="cal";S.calDate=new Date(n.d);S.calMode="day";go("home");const cb=$(".calbox");cb&&cb.scrollIntoView({block:"start"});
+    if(n.k==="miss"||n.k==="decl")A.rsvp({dataset:{id:n.e.id,d:n.d.toISOString(),m:"join"}})},
   toggleRail(){const r=$("#railbox"),b=$(".flowbtn");r.hidden=!r.hidden;b.setAttribute("aria-expanded",String(!r.hidden))},
   rsvp(el){S.rideMenu=null;const e=S.events.find(x=>x.id===el.dataset.id),d=new Date(el.dataset.d),m=el.dataset.m,k=rkey(e,d);
     if(m==="none"){S.rsvp[k]={mode:"none"};render();toast("Marked: no ride needed");return}
@@ -1878,7 +1889,7 @@ function drawQR(){const c=$("#qr");if(!c)return;const g=c.getContext("2d"),cs=ge
 /* ---------- simulated system notifications (top-right) ---------- */
 function renderNotifs(){const box=$("#notifs");if(!box)return;
   box.innerHTML=(S.notifs||[]).map(n=>`<div class="notif k-${n.k} ${n.fresh?"fresh":""}" role="status">
-    <span class="nic">${ic({join:"group",done:"check",miss:"warn"}[n.k])}</span>
+    <span class="nic">${ic({join:"group",done:"check",miss:"warn",decl:"close"}[n.k])}</span>
     <div class="nbody"><div class="nhead"><b>${esc(n.title)}</b><span class="ntime">now</span></div><p>${n.body}</p>
       <div class="nact"><button class="nbtn" data-act="notifOpen" data-n="${n.id}">${esc(n.cta)}</button><button class="nbtn ghost" data-act="notifClose" data-n="${n.id}">Dismiss</button></div></div>
     <button class="nx" data-act="notifClose" data-n="${n.id}" aria-label="Dismiss notification">${ic("close")}</button></div>`).join("");
@@ -1900,6 +1911,11 @@ function simNotif(k){
     S.rides=S.rides.filter(r=>!(r.eventId===e.id&&same(r.date,d)));S.rides.push({eventId:e.id,kids:[kid],driver:who.name,status:"Confirmed",date:d});
     S.rsvp[rkey(e,d)]={mode:"join",n:1,kids:[kid],recips:["p2"]};
     n={k,title:"Ride organized",body:`<b>${esc(who.name)}</b> added ${esc(kid)} to their ride to <b>${esc(e.title)}</b> · ${fmt(d)}, ${e.time}. This event is organized.`,cta:"View ride",e,d}}
+  else if(k==="decl"){
+    let x=up.find(x=>free(x)&&rideOn(x.e,x.d)&&rideOn(x.e,x.d).driver!=="You")||pick(({e,d})=>!rideOn(e,d)&&!S.rsvp[rkey(e,d)]);
+    const {e,d}=x,r=rideOn(e,d),who=r&&r.driver!=="You"?r.driver:person("p4").name,kids=r&&r.kids&&r.kids.length?r.kids.join(" and "):kid;
+    S.rides=S.rides.filter(q=>!(q.eventId===e.id&&same(q.date,d)));delete S.rsvp[rkey(e,d)];
+    n={k,title:"Ride declined",body:`<b>${esc(who)}</b> declined the ride for ${esc(kids)} to <b>${esc(e.title)}</b> · ${fmt(d)}, ${e.time}. ${esc(kids)} has no ride now — please reorganize it.`,cta:"Reorganize ride",e,d}}
   else{const x=pick(({e,d})=>!rideOn(e,d)&&!S.rsvp[rkey(e,d)]),{e,d}=x,tom=same(d,addD(TODAY,1)),tod=same(d,TODAY);
     n={k,title:"No ride organized yet",body:`<b>${esc(e.title)}</b> is ${tod?"today":tom?"tomorrow":"on "+fmt(d)} at ${e.time} and nobody is driving ${esc(kid)} yet.`,cta:"Find a ride",e,d}}
   n.id="n"+Date.now()+Math.random().toString(36).slice(2,5);n.fresh=true;
