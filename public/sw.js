@@ -1,5 +1,5 @@
 /* SharePa service worker: offline page + push notifications. */
-const CACHE = "sharepa-v1";
+const CACHE = "sharepa-v2";
 const OFFLINE = "/offline.html";
 
 self.addEventListener("install", (event) => {
