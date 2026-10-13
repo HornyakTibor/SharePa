@@ -29,6 +29,7 @@ export function WeekCalendar({ data }: { data: HomeData }) {
   const start = data.week[0].date;
   const end = addDays(start, 6);
   return (
+    <div data-tour="week">
     <Card label="This week">
       <CardTitle icon={Icons.calendar} aside={<span className="text-sm text-ink-3">{shortDate(start)} – {shortDate(end)} {end.slice(0, 4)}</span>}>
         This week
@@ -54,5 +55,6 @@ export function WeekCalendar({ data }: { data: HomeData }) {
         </div>
       </div>
     </Card>
+    </div>
   );
 }

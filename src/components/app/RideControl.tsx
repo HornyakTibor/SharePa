@@ -144,6 +144,7 @@ export function RideControl(p: RideControlProps) {
         ref={btnRef}
         type="button"
         aria-haspopup="menu"
+        data-tour="ride"
         aria-expanded={menuOpen}
         disabled={pending}
         title={current?.label ?? "Manage ride"}
