@@ -1,27 +1,6 @@
 import type { Occurrence } from "@/lib/data/home";
 import { categoryLabel, categoryStyle } from "@/lib/categories";
-
-const AVATAR_COLORS = [
-  ["#e3def7", "#5833a7"], ["#f5eff1", "#89556c"], ["#fef3a1", "#645d18"],
-  ["#f3eff7", "#6e4b8c"], ["#e4ecf6", "#043873"], ["#e4d1d8", "#5d3848"],
-];
-
-export function initials(name: string) {
-  return name.split(" ").filter(Boolean).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
-}
-
-export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
-  const [bg, fg] = AVATAR_COLORS[[...name].reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length];
-  return (
-    <span
-      aria-hidden="true"
-      className="grid shrink-0 place-items-center rounded-full text-sm font-bold"
-      style={{ width: size, height: size, background: bg, color: fg }}
-    >
-      {initials(name)}
-    </span>
-  );
-}
+export { Avatar, initials } from "./Avatar";
 
 export function CategoryTag({ category, activity }: { category: string | null; activity: string | null }) {
   if (!category) return null;
@@ -61,6 +40,7 @@ export function rideStatus(o: Occurrence, meId: string): { text: string; tone: "
   const r = o.ride;
   if (r && r.driver_id !== meId && r.status === "confirmed") return { text: `Ride ✓ · ${first(r.driverName)} drives`, tone: "ok" };
   if (o.choice?.mode === "none") return { text: "No ride needed", tone: "none" };
+  if (o.choice?.mode === "join" && o.offers.length) return { text: `${o.offers.length} driving offer${o.offers.length === 1 ? "" : "s"}`, tone: "open" };
   if (o.choice?.mode === "join") return { text: "Ride requested", tone: "open" };
   if (o.myRide) return { text: `You drive · ${o.myRide.seats} free seat${o.myRide.seats === 1 ? "" : "s"}`, tone: "mine" };
   if (r && r.driver_id !== meId) return { text: `${first(r.driverName)} offers ${r.seats} seat${r.seats === 1 ? "" : "s"}`, tone: "open" };
@@ -72,6 +52,9 @@ export function rideDetail(o: Occurrence, meId: string, kidNames: (ids: string[]
   const c = o.choice;
   const r = o.ride;
   if (r && r.status === "confirmed" && r.driver_id !== meId && r.pickup) return `Pick-up ${(r.pickup_time ?? "").slice(0, 5)} · ${r.pickup}`;
+  if (c?.mode === "join" && o.offers.length) {
+    return `From ${o.offers.map((x) => x.driverName.split(" ")[0]).join(" and ")} · waiting for you to approve`;
+  }
   if (c?.mode === "join") {
     const n = c.notifiedIds.length;
     const kids = kidNames(c.childIds).join(", ");

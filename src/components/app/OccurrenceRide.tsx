@@ -1,6 +1,7 @@
 import type { HomeData, Occurrence } from "@/lib/data/home";
 import { WEEKDAYS, hhmm, shortDate, weekday } from "@/lib/dates";
 import { RideControl } from "./RideControl";
+import { OffersButton } from "./OffersButton";
 import { RideChip, rideDetail } from "./ui";
 
 /** Ride status chip, the one-line detail and the Manage ride menu for one event occurrence. */
@@ -15,6 +16,16 @@ export function OccurrenceRide({ o, data, compact = false }: { o: Occurrence; da
         {!compact && detail && !o.past && <span className="text-xs text-ink-3">{detail}</span>}
       </div>
       {compact && detail && !o.past && <span className="text-[11px] leading-snug text-ink-3">{detail}</span>}
+      {!o.past && o.offers.length > 0 && !(o.ride && o.ride.status === "confirmed") && (
+        <OffersButton
+          offers={o.offers.map((r) => ({ id: r.id, driverName: r.driverName, seats: r.seats, pickup: r.pickup, pickupTime: r.pickup_time }))}
+          title={o.event.title}
+          when={`${WEEKDAYS[weekday(o.date)]} ${shortDate(o.date)} · ${hhmm(o.event.start_time)}`}
+          kids={names(o.choice?.childIds ?? []).join(" and ")}
+          compact={compact}
+          autoOpen={!compact && data.openOffers === `${o.event.id}_${o.date}`}
+        />
+      )}
       {!o.past && (
         <RideControl
           eventId={o.event.id}
