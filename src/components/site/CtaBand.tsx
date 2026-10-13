@@ -2,10 +2,11 @@ import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
 import { Arrow } from "./icons";
 
-export function CtaBand({ image, text, id, padTop = false }: { image: StaticImageData; text: string; id?: string; padTop?: boolean }) {
+/** Full-width call-to-action lane ("Alternative – full-width CTA lanes" in the SharePa Website design). */
+export function CtaBand({ image, text, id, gapAbove = false }: { image: StaticImageData; text: string; id?: string; gapAbove?: boolean }) {
   return (
-    <section id={id} className={`mx-auto max-w-[1200px] px-6 pb-24 ${padTop ? "pt-24" : ""}`}>
-      <div className="grid items-center gap-8 overflow-hidden rounded-[32px] bg-[linear-gradient(95deg,#150830_0%,#341C67_50%,#5833A7_100%)] p-8 text-white min-[880px]:grid-cols-[minmax(0,1fr)_auto] min-[880px]:pr-12">
+    <section id={id} className={`bg-[linear-gradient(95deg,#2C2145_0%,#483376_50%,#6947B0_100%)] text-white ${gapAbove ? "mt-24" : ""}`}>
+      <div className="mx-auto grid max-w-[1200px] items-center gap-8 px-6 py-8 min-[880px]:grid-cols-[minmax(0,1fr)_auto] min-[880px]:pr-[72px] min-[880px]:pl-14">
         <div className="flex flex-wrap items-center gap-8">
           <div className="flex h-40 w-[200px] shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-lilac">
             <Image src={image} alt="" className="h-[150px] w-auto" />

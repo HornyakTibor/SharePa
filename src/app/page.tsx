@@ -254,7 +254,7 @@ export default function Home() {
           </div>
         </section>
 
-        <CtaBand padTop image={illCtaJoin} text="Join the first 100 families and share your first 50 rides for free." />
+        <CtaBand gapAbove id="signup" image={illCtaJoin} text="Join the first 100 families and share your first 50 rides for free." />
       </main>
 
       <SiteFooter />
