@@ -13,6 +13,12 @@ export type SetupResult = { ok: true; message?: string } | { ok: false; error: s
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const clean = (v: unknown, max = 160) => String(v ?? "").trim().replace(/\s+/g, " ").slice(0, max);
+/** Where to go after saving: the form's own "next" (only app pages), otherwise the next step. */
+const nextOr = (formData: FormData, fallback: string) => {
+  const n = String(formData.get("next") ?? "");
+  return n === "/app/profile" ? n : fallback;
+};
+
 /** A latitude/longitude from the form, or null when missing or out of range. */
 const coord = (v: unknown, max: number) => {
   if (v === null || v === undefined || v === "") return null;
@@ -112,7 +118,7 @@ export async function applyEventSelection(formData: FormData) {
   if (show.length) await s.supabase.from("events").update({ hidden: false }).in("id", show).eq("owner_id", s.uid);
   if (hide.length) await s.supabase.from("events").update({ hidden: true }).in("id", hide).eq("owner_id", s.uid);
   revalidatePath("/app", "layout");
-  redirect("/app/setup?step=3");
+  redirect(nextOr(formData, "/app/setup?step=3"));
 }
 
 // ---------- step 3: categories ----------
@@ -207,7 +213,7 @@ export async function saveProfile(_prev: ProfileState, formData: FormData): Prom
     .eq("id", s.uid);
   if (error) return { error: "We couldn't save your profile. Please try again." };
   revalidatePath("/app", "layout");
-  redirect("/app/setup?step=5");
+  redirect(nextOr(formData, "/app/setup?step=5"));
 }
 
 // ---------- step 5: children ----------

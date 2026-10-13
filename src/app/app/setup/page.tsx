@@ -21,8 +21,9 @@ export const metadata: Metadata = { title: "Set up SharePa" };
 
 const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-export default async function SetupPage({ searchParams }: { searchParams: Promise<{ step?: string }> }) {
-  const { step: raw } = await searchParams;
+export default async function SetupPage({ searchParams }: { searchParams: Promise<{ step?: string; from?: string }> }) {
+  const { step: raw, from } = await searchParams;
+  const fromProfile = from === "profile"; // opened from the Profile page to edit one thing
   const supabase = await createClient();
   const { data: auth } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
   if (!supabase || !auth.user) redirect("/login?next=/app/setup");
@@ -40,26 +41,26 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
     return { weekday: weekday(d), label: `${DAY_NAMES[weekday(d)]} (${shortDate(d)})` };
   });
   const visible = data.events.filter((e) => !e.hidden);
-  const href = (s: number) => `/app/setup?step=${s}`;
+  const href = (s: number) => `/app/setup?step=${s}${fromProfile ? "&from=profile" : ""}`;
 
   let body: React.ReactNode;
   if (i === 0) body = <StepImport events={data.events} dayOptions={dayOptions} today={now} rangeEnd={addDays(now, 13)} />;
   else if (i === 1)
-    body = data.events.length ? <StepSelect events={data.events} dates={dates} /> : <NeedFirst text="Import your calendar first" to={1} label="Import calendar" />;
+    body = data.events.length ? <StepSelect events={data.events} dates={dates} next={fromProfile ? "/app/profile" : undefined} /> : <NeedFirst text="Import your calendar first" to={1} label="Import calendar" />;
   else if (i === 2)
     body = visible.length ? (
       <StepCategorize events={visible} dates={dates} kids={data.children} />
     ) : (
       <NeedFirst text="No SharePa events yet" to={data.events.length ? 2 : 1} label={data.events.length ? "Choose events" : "Import calendar"} />
     );
-  else if (i === 3) body = <StepProfile me={data.me} />;
+  else if (i === 3) body = <StepProfile me={data.me} next={fromProfile ? "/app/profile" : undefined} />;
   else if (i === 4) body = <StepChildren kids={data.children} address={data.me.address} />;
   else if (i === 5) body = <StepFriends friendCount={data.friends.length} inviteCode={data.me.inviteCode} isDemo={data.me.isDemo} firstName={data.me.name.split(" ")[0]} />;
   else body = data.friends.length ? <StepLabels friends={data.friends} events={data.events} /> : <NeedFirst text="No friends to label yet" to={6} label="Add friends" />;
 
   // The main button: submits the step's form where there is one, otherwise moves on.
   const submits = (i === 1 && data.events.length > 0) || i === 3;
-  const primaryLabel = last ? "Go to dashboard" : i === 1 && data.events.length ? "Apply for SharePa" : "Continue";
+  const primaryLabel = fromProfile ? (submits ? "Save and back to Profile" : "Back to Profile") : last ? "Go to dashboard" : i === 1 && data.events.length ? "Apply for SharePa" : "Continue";
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -117,6 +118,16 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             ) : (
               <span />
             )}
+            {fromProfile ? (
+              <div className="flex flex-wrap gap-2">
+                {submits && <Link href="/app/profile" className={cx(btn.base, btn.ghost)}>Cancel</Link>}
+                {submits ? (
+                  <button form="step-form" className={cx(btn.base, btn.pri)}>{primaryLabel}</button>
+                ) : (
+                  <Link href="/app/profile" className={cx(btn.base, btn.pri)}>{primaryLabel}</Link>
+                )}
+              </div>
+            ) : (
             <div className="flex flex-wrap gap-2">
               {last ? (
                 <form action={finishSetup}><button className={cx(btn.base, btn.ghost)}>Skip and finish</button></form>
@@ -131,6 +142,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 <Link href={href(step + 1)} className={cx(btn.base, btn.pri)}>{primaryLabel}</Link>
               )}
             </div>
+            )}
           </div>
         </section>
       </main>

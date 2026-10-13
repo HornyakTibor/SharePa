@@ -56,6 +56,10 @@ users (parents), children, events (category + activity), places / pick-up points
 - .ics parsing is client-side (`src/lib/ics.ts`): weekly repeating events + one-offs in the next 14 days, converted to Budapest time. Direct Google/Microsoft calendar connection is for later.
 - apply_migration tip: `cron.schedule` and big mixed scripts may be cancelled — apply them as small separate migrations.
 
+## Profile
+- `/app/profile` (header avatar + "Profile" link; Log out moves there on phones): details, kids, friends + labels, calendar (SharePa events + hidden count), "Your places" map (home, pick-up points, activity places), account (set-up progress, change password via `/reset-password`, log out).
+- Edit buttons open the matching set-up step with `&from=profile`; there the footer shows "Save and back to Profile" / "Back to Profile" and forms send `next=/app/profile`.
+
 ## Maps
 - Leaflet (`leaflet` npm, loaded in the browser only) with CARTO Voyager tiles (OpenStreetMap data, attribution shown). Address search and "what's here" via Photon (photon.komoot.io, free, no key), biased to Budapest — `src/lib/geo.ts`.
 - `src/components/map/`: `LeafletMap` (pins + dashed route line), `MapPicker` / `AddressField` (input + "Select from map" dialog; typing clears the pin), `RoutePreview` (pick-up(s) → event place, distance, "Directions ↗" to Google Maps).
