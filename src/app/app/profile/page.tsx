@@ -11,6 +11,7 @@ import { AppHeader } from "@/components/app/AppHeader";
 import { Avatar, Card, CardTitle, Icons } from "@/components/app/ui";
 import { LeafletMap, type MapMarker } from "@/components/map/LeafletMap";
 import { btn, cx } from "@/components/setup/styles";
+import { DeviceCard } from "@/components/pwa/DeviceCard";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Profile – SharePa" };
@@ -179,6 +180,13 @@ export default async function ProfilePage() {
               </div>
             </Card>
           )}
+
+          <Card label="This device" className="scroll-mt-24" id="device">
+            <CardTitle icon={<svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5" /><path d="M11 18.5h2" /></svg>}>
+              App &amp; notifications
+            </CardTitle>
+            <DeviceCard isDemo={me.isDemo} />
+          </Card>
 
           <Card label="Account">
             <CardTitle icon={Icons.tag}>Account</CardTitle>

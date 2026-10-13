@@ -46,7 +46,7 @@ users (parents), children, events (category + activity), places / pick-up points
 - `/api/keep-alive` is hit daily by Vercel Cron (`vercel.json`) so the free Supabase project never pauses.
 
 ## Rides UI
-- Each upcoming event occurrence shows a status chip + Manage ride menu (`src/components/app/RideControl.tsx`, `OccurrenceRide.tsx`): join (pick kids → notify friends + note), drive (seats, pick-up, time → notify + note), no ride needed. Friends whose labels match the event are pre-ticked. Open offers show as "N driving offers" + See offers dialog with Approve (`OffersButton.tsx`). Header bell (`NotificationBell.tsx`) lists notifications; offers link to `/app?view=list&offers=<event>_<date>` (auto-opens the dialog); requests have "I can drive" (`offerFromRequest`). In-app only — no push/email yet.
+- Each upcoming event occurrence shows a status chip + Manage ride menu (`src/components/app/RideControl.tsx`, `OccurrenceRide.tsx`): join (pick kids → notify friends + note), drive (seats, pick-up, time → notify + note), no ride needed. Friends whose labels match the event are pre-ticked. Open offers show as "N driving offers" + See offers dialog with Approve (`OffersButton.tsx`). Header bell (`NotificationBell.tsx`) lists notifications; offers link to `/app?view=list&offers=<event>_<date>` (auto-opens the dialog); requests have "I can drive" (`offerFromRequest`). In-app + web push (see PWA & push); no email yet.
 
 ## Onboarding (set-up)
 - `/app/setup?step=1…7` (`src/app/app/setup/`, components in `src/components/setup/`): import calendar (.ics file, sample calendar, or add manually), choose SharePa events, categorize (dialog with name-based suggestions + who goes), profile (+36 phone formatting, pick-up points), children, friends (search + invite link/QR), labels. Every step is skippable; done-checks in `src/lib/data/setup.ts`.
@@ -66,7 +66,13 @@ users (parents), children, events (category + activity), places / pick-up points
 - Used in: set-up profile (home address, pick-up points), manual events (place), ride dialog "Somewhere else" pick-up + route preview, Driving offers dialog (numbered pick-up pins).
 - Columns: `profiles.home_lat/home_lng`, `events.place_lat/place_lng`, `rides.pickup_lat/pickup_lng`; pick-up points keep lat/lng in their JSON. Trigger `rides_fill_pickup_coords` fills "My home" (driver's home) and the demo family's usual spots. Demo coordinates are re-applied nightly by `private.reset_demo_extras()`.
 
+## PWA & push
+- Installable: `src/app/manifest.ts` (start `/app`, standalone, theme #5833A7), icons in `public/icons/` (any, maskable, apple-touch, badge), `public/sw.js` (offline page `public/offline.html` for navigations, push + notification click → opens the right screen), registered by `src/components/pwa/ServiceWorker.tsx` (production only). Middleware skips `icons/`, `sw.js`, `offline.html`, `manifest.webmanifest`.
+- Push: `push_subscriptions` (one row per browser; `revoked_at` instead of deleting — apply_migration cancels SQL containing DELETE). RPCs `save_push_subscription`, `remove_push_subscription`, `send_test_push`, `push_gone(secret, endpoints)`. Trigger `notification_push` on notifications (insert / repeat) → `private.push()` → pg_net POST to `private.settings.push_url` (`https://sharepa.tiborhornyak.hu/api/push`) with header `x-push-secret`. `src/app/api/push/route.ts` sends with `web-push` (VAPID) and switches off 404/410 browsers. Offers link to the offers dialog.
+- Env (Vercel, production + preview): `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `PUSH_WEBHOOK_SECRET` (same value as `private.settings.push_secret`). Never commit them.
+- UI: Profile → "App & notifications" (`src/components/pwa/DeviceCard.tsx`): Install app (beforeinstallprompt / iPhone hint), Turn on/off notifications, Send a test. Bell panel links there. iPhone push works only from the Home Screen app. Demo: only the newest browser gets Kata's pushes. Push is sent to production only (previews are behind Vercel login).
+
 ## Way of working
 - One feature per branch / pull request. Plan first, then build. Keep this file updated with decisions.
 - `npm run build` and `npm run lint` must pass before opening a pull request.
-- Build order: design-system components → database → login → onboarding (7 skippable steps) → calendar (.ics) → friends & invites → rides → maps (done) → PWA & push → demo mode polish.
+- Build order: design-system components → database → login → onboarding (7 skippable steps) → calendar (.ics) → friends & invites → rides → maps (done) → PWA & push (done) → demo mode polish.

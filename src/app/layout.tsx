@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { ServiceWorker } from "@/components/pwa/ServiceWorker";
 import { Montserrat, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -16,13 +17,19 @@ const robotoMono = Roboto_Mono({
 export const metadata: Metadata = {
   title: "SharePa – share the school run",
   description: "Car-pool school runs and kids' activities with parents you trust.",
+  applicationName: "SharePa",
+  appleWebApp: { capable: true, title: "SharePa", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
 };
+
+export const viewport: Viewport = { themeColor: "#5833A7" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body className={`${montserrat.variable} ${robotoMono.variable} font-sans antialiased`}>
         {children}
+        <ServiceWorker />
       </body>
     </html>
   );
