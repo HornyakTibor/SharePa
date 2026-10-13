@@ -43,7 +43,7 @@ export type Occurrence = {
 
 export type Notification = {
   id: string;
-  kind: "request" | "seats" | "offer" | "confirmed" | "declined";
+  kind: "request" | "seats" | "offer" | "confirmed" | "declined" | "friend";
   title: string;
   body: string;
   createdAt: string;
@@ -53,7 +53,7 @@ export type Notification = {
 };
 
 export type HomeData = {
-  me: { id: string; name: string; isDemo: boolean; address: string | null };
+  me: { id: string; name: string; isDemo: boolean; address: string | null; onboarded: boolean; defaultPickup: string | null };
   today: string;
   week: { date: string; items: Occurrence[] }[];
   upcoming: Occurrence[];
@@ -77,12 +77,13 @@ export async function loadHome(supabase: SupabaseClient, userId: string): Promis
   const ridesFrom = weekStart < now ? weekStart : now;
 
   const [profileRes, childrenRes, eventsRes, friendsRes, notifRes] = await Promise.all([
-    supabase.from("profiles").select("full_name, is_demo, address").eq("id", userId).maybeSingle(),
+    supabase.from("profiles").select("full_name, is_demo, address, onboarded_at, pickup_points, default_pickup").eq("id", userId).maybeSingle(),
     supabase.from("children").select("id, name").eq("parent_id", userId).order("name"),
     supabase
       .from("events")
       .select("id, title, place, category, activity, weekday, start_time, needs_ride, event_children(child_id)")
       .eq("owner_id", userId)
+      .eq("hidden", false)
       .order("start_time"),
     supabase
       .from("friendships")
@@ -202,6 +203,8 @@ export async function loadHome(supabase: SupabaseClient, userId: string): Promis
       name: profileRes.data?.full_name || "there",
       isDemo: Boolean(profileRes.data?.is_demo),
       address: profileRes.data?.address ?? null,
+      onboarded: Boolean(profileRes.data?.onboarded_at),
+      defaultPickup: defaultPickup(profileRes.data?.pickup_points, profileRes.data?.default_pickup),
     },
     today: now,
     week,
@@ -227,4 +230,11 @@ export async function loadHome(supabase: SupabaseClient, userId: string): Promis
       rideDate: n.ride_date,
     })),
   };
+}
+
+/** The parent's chosen default pick-up point as "Name, address", or null for home. */
+function defaultPickup(points: unknown, id: string | null | undefined): string | null {
+  if (!id || id === "home" || !Array.isArray(points)) return null;
+  const p = points.find((x) => x?.id === id);
+  return p ? `${p.name}, ${p.address}` : null;
 }

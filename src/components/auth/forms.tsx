@@ -31,7 +31,7 @@ export function LoginForm({ next, error }: { next?: string; error?: string }) {
   );
 }
 
-export function SignupForm() {
+export function SignupForm({ invite }: { invite?: string }) {
   const [state, action] = useActionState<FormState, FormData>(signUp, {});
   if (state.info) {
     return (
@@ -46,6 +46,7 @@ export function SignupForm() {
   return (
     <form action={action} className="flex flex-col gap-4">
       <FormMessage error={state.error} />
+      {invite && <input type="hidden" name="invite" value={invite} />}
       <Field label="Full name" name="name" autoComplete="name" required defaultValue={state.name} />
       <Field label="Email" name="email" type="email" autoComplete="email" required defaultValue={state.email} />
       <Field label="Password" name="password" type="password" autoComplete="new-password" minLength={8} required hint="At least 8 characters." />

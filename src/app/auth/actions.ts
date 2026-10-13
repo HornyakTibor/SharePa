@@ -43,6 +43,7 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const invite = String(formData.get("invite") ?? "");
   const keep = { name, email };
 
   if (!name) return { ...keep, error: "Please enter your full name." };
@@ -54,7 +55,7 @@ export async function signUp(_prev: FormState, formData: FormData): Promise<Form
     email,
     password,
     options: {
-      data: { full_name: name },
+      data: /^[a-f0-9]{10}$/.test(invite) ? { full_name: name, invite } : { full_name: name },
       emailRedirectTo: `${await siteOrigin()}/auth/callback?next=/app`,
     },
   });

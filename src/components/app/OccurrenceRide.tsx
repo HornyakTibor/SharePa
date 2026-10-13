@@ -30,6 +30,8 @@ export function OccurrenceRide({ o, data, compact = false }: { o: Occurrence; da
         <RideControl
           eventId={o.event.id}
           title={o.event.title}
+          category={o.event.category}
+          activity={o.event.activity}
           time={hhmm(o.event.start_time)}
           place={o.event.place}
           date={o.date}
@@ -40,6 +42,7 @@ export function OccurrenceRide({ o, data, compact = false }: { o: Occurrence; da
           eventKidIds={o.event.childIds}
           friends={data.friends}
           homeAddress={data.me.address}
+          defaultPickup={data.me.defaultPickup}
           firstName={data.me.name.split(" ")[0]}
           myRide={o.myRide ? { seats: o.myRide.seats, pickup: o.myRide.pickup, pickupTime: o.myRide.pickup_time } : null}
         />
