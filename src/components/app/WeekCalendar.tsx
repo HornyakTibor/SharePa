@@ -1,9 +1,10 @@
 import type { HomeData, Occurrence } from "@/lib/data/home";
 import { categoryStyle } from "@/lib/categories";
 import { WEEKDAYS, addDays, hhmm, monthShort, shortDate } from "@/lib/dates";
-import { Card, CardTitle, CategoryTag, Icons, RideChip } from "./ui";
+import { Card, CardTitle, CategoryTag, Icons } from "./ui";
+import { OccurrenceRide } from "./OccurrenceRide";
 
-function EventCard({ o, meId }: { o: Occurrence; meId: string }) {
+function EventCard({ o, data }: { o: Occurrence; data: HomeData }) {
   const s = categoryStyle(o.event.category);
   return (
     <div
@@ -18,8 +19,8 @@ function EventCard({ o, meId }: { o: Occurrence; meId: string }) {
       {o.event.place && <span className="text-xs leading-snug text-ink-3">{o.event.place}</span>}
       <div className="flex flex-wrap gap-1.5 pt-0.5">
         <CategoryTag category={o.event.category} activity={o.event.activity} />
-        {!o.past && <RideChip o={o} meId={meId} />}
       </div>
+      <OccurrenceRide o={o} data={data} compact />
     </div>
   );
 }
@@ -43,7 +44,7 @@ export function WeekCalendar({ data }: { data: HomeData }) {
                   <span className="text-xs font-semibold">{isToday ? "Today" : `${Number(day.date.slice(8))} ${monthShort(day.date)}`}</span>
                 </div>
                 {day.items.length ? (
-                  day.items.map((o) => <EventCard key={o.event.id} o={o} meId={data.me.id} />)
+                  day.items.map((o) => <EventCard key={o.event.id} o={o} data={data} />)
                 ) : (
                   <p className="m-0 px-2 py-3 text-xs text-ink-3">Nothing planned</p>
                 )}

@@ -36,12 +36,16 @@ users (parents), children, events (category + activity), places / pick-up points
 
 ## Database (Supabase)
 - Migrations in `supabase/migrations/` (applied to the live project). Tables: profiles (auto-created on sign-up), children, friendships (one row per direction, owner's labels), events (weekly: weekday 0=Mon + start_time), event_children, rides (per event date + driver), ride_passengers. RLS on all; helpers `private.is_friend`, `private.can_see_event`, `private.can_see_ride` (private schema, not callable via the API).
+- `ride_choices` (event_id + ride_date + parent_id): mode join | drive | none, child_ids, notified_ids, note. Owner manages; notified friends can read. "drive" also creates/updates the parent's row in `rides`; other choices cancel it. Saved by `saveRideChoice` in `src/app/app/actions.ts` (server-side checks: own event, not past, own kids, own friends).
 - Home data is loaded in `src/lib/data/home.ts` with the parent's own session (RLS decides visibility). Dates are Budapest-time ISO strings (`src/lib/dates.ts`).
 
 ## Demo mode
 - Demo family: Kata Molnár (`demo@sharepa.tiborhornyak.hu`) + 7 friends (`*@demo.sharepa.tiborhornyak.hu`), `profiles.is_demo = true`. `public.reset_demo()` rebuilds it; pg_cron job `reset-demo-family` runs 02:00 UTC. One-time setup script: `supabase/run-once-demo-family.sql`.
 - "Try the demo" (`tryDemo` server action) signs in with `DEMO_EMAIL` / `DEMO_PASSWORD` (Vercel env, server-only). Demo accounts can't change their password.
 - `/api/keep-alive` is hit daily by Vercel Cron (`vercel.json`) so the free Supabase project never pauses.
+
+## Rides UI
+- Each upcoming event occurrence shows a status chip + Manage ride menu (`src/components/app/RideControl.tsx`, `OccurrenceRide.tsx`): join (pick kids → notify friends + note), drive (seats, pick-up, time → notify + note), no ride needed. Friends whose labels match the event are pre-ticked. Notes are stored; real notifications come later.
 
 ## Way of working
 - One feature per branch / pull request. Plan first, then build. Keep this file updated with decisions.
