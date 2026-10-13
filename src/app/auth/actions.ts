@@ -13,6 +13,9 @@ function friendly(message: string): string {
   if (m.includes("already registered") || m.includes("already been registered"))
     return "There's already an account with this email. Log in instead?";
   if (m.includes("email not confirmed")) return "Please confirm your email first — the link is in your inbox.";
+  // Supabase's built-in mailer only sends a few emails an hour for the whole site.
+  if (m.includes("email rate limit"))
+    return "We can't send more confirmation emails right now. Please try again in an hour — or explore SharePa with “Try the demo” below.";
   if (m.includes("rate limit") || m.includes("too many")) return "Too many attempts. Please wait a minute and try again.";
   if (m.includes("password") && (m.includes("6") || m.includes("short") || m.includes("weak")))
     return "Please choose a stronger password: at least 8 characters.";
