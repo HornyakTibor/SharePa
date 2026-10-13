@@ -56,7 +56,13 @@ users (parents), children, events (category + activity), places / pick-up points
 - .ics parsing is client-side (`src/lib/ics.ts`): weekly repeating events + one-offs in the next 14 days, converted to Budapest time. Direct Google/Microsoft calendar connection is for later.
 - apply_migration tip: `cron.schedule` and big mixed scripts may be cancelled — apply them as small separate migrations.
 
+## Maps
+- Leaflet (`leaflet` npm, loaded in the browser only) with CARTO Voyager tiles (OpenStreetMap data, attribution shown). Address search and "what's here" via Photon (photon.komoot.io, free, no key), biased to Budapest — `src/lib/geo.ts`.
+- `src/components/map/`: `LeafletMap` (pins + dashed route line), `MapPicker` / `AddressField` (input + "Select from map" dialog; typing clears the pin), `RoutePreview` (pick-up(s) → event place, distance, "Directions ↗" to Google Maps).
+- Used in: set-up profile (home address, pick-up points), manual events (place), ride dialog "Somewhere else" pick-up + route preview, Driving offers dialog (numbered pick-up pins).
+- Columns: `profiles.home_lat/home_lng`, `events.place_lat/place_lng`, `rides.pickup_lat/pickup_lng`; pick-up points keep lat/lng in their JSON. Trigger `rides_fill_pickup_coords` fills "My home" (driver's home) and the demo family's usual spots. Demo coordinates are re-applied nightly by `private.reset_demo_extras()`.
+
 ## Way of working
 - One feature per branch / pull request. Plan first, then build. Keep this file updated with decisions.
 - `npm run build` and `npm run lint` must pass before opening a pull request.
-- Build order: design-system components → database → login → onboarding (7 skippable steps) → calendar (.ics) → friends & invites → rides → maps → PWA & push → demo mode polish.
+- Build order: design-system components → database → login → onboarding (7 skippable steps) → calendar (.ics) → friends & invites → rides → maps (done) → PWA & push → demo mode polish.

@@ -6,20 +6,22 @@ import type { SetupData, PickupPoint } from "@/lib/data/setup";
 import { formatHu } from "@/lib/phone";
 import { FormMessage } from "@/components/ui/form";
 import { btn, cx, inputCls, Label } from "./ui";
+import { AddressField, type PlaceValue } from "@/components/map/MapPicker";
 
 /** Step 4. The footer's Continue button submits this form (id "step-form"). */
 export function StepProfile({ me }: { me: SetupData["me"] }) {
   const [state, action] = useActionState(saveProfile, undefined);
-  const [address, setAddress] = useState(me.address);
+  const [home, setHome] = useState<PlaceValue>({ address: me.address, lat: me.homeLat, lng: me.homeLng });
+  const address = home.address;
   const [points, setPoints] = useState<PickupPoint[]>(me.pickupPoints);
   const [pick, setPick] = useState(me.defaultPickup);
   const [adding, setAdding] = useState(false);
-  const [draft, setDraft] = useState({ name: "", address: "" });
+  const [draft, setDraft] = useState<{ name: string } & PlaceValue>({ name: "", address: "" });
   const phoneBlur = (e: React.FocusEvent<HTMLInputElement>) => (e.target.value = formatHu(e.target.value));
 
   const addPoint = () => {
     if (!draft.name.trim() || !draft.address.trim()) return;
-    const p = { id: `p-${Date.now().toString(36)}`, name: draft.name.trim(), address: draft.address.trim() };
+    const p: PickupPoint = { id: `p-${Date.now().toString(36)}`, name: draft.name.trim(), address: draft.address.trim(), lat: draft.lat ?? null, lng: draft.lng ?? null };
     setPoints([...points, p]);
     setPick(p.id);
     setDraft({ name: "", address: "" });
@@ -38,9 +40,7 @@ export function StepProfile({ me }: { me: SetupData["me"] }) {
           <span id="email-hint" className="text-xs font-normal text-ink-3">Your login email. Changing it comes with the Profile page.</span>
         </Label>
         <Label text="Phone number"><input className={inputCls} name="phone" type="tel" placeholder="+36 30 123 4567" defaultValue={me.phone} autoComplete="tel" onBlur={phoneBlur} /></Label>
-        <Label text="Home address">
-          <input className={inputCls} name="address" placeholder="Fehérvári út 41, 1117 Budapest" value={address} onChange={(e) => setAddress(e.target.value)} autoComplete="street-address" />
-        </Label>
+        <AddressField label="Home address" name="address" value={home} onChange={setHome} placeholder="Fehérvári út 41, 1117 Budapest" title="Find your home address" inputClassName={inputCls} />
         <Label text="Emergency contact name"><input className={inputCls} name="emergencyName" placeholder="Gergő Molnár" defaultValue={me.emergencyName} autoComplete="off" /></Label>
         <Label text="Emergency contact phone"><input className={inputCls} name="emergencyPhone" type="tel" placeholder="+36 20 987 6543" defaultValue={me.emergencyPhone} autoComplete="off" onBlur={phoneBlur} /></Label>
         <div className="flex flex-col gap-3 sm:col-span-2">
@@ -58,7 +58,14 @@ export function StepProfile({ me }: { me: SetupData["me"] }) {
           {adding && (
             <div className="grid items-end gap-3 rounded-[20px] bg-canvas p-4 sm:grid-cols-[1fr_1.4fr_auto]">
               <Label text="Name"><input className={cx(inputCls, "bg-white")} placeholder="Bikás park" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} /></Label>
-              <Label text="Address"><input className={cx(inputCls, "bg-white")} placeholder="Bartók Béla út 152, Budapest" value={draft.address} onChange={(e) => setDraft({ ...draft, address: e.target.value })} /></Label>
+              <AddressField
+                label="Address"
+                value={draft}
+                onChange={(v) => setDraft({ ...draft, ...v })}
+                placeholder="Bartók Béla út 152, Budapest"
+                title="Choose the pick-up point"
+                inputClassName={cx(inputCls, "bg-white")}
+              />
               <div className="flex gap-2">
                 <button type="button" className={cx(btn.base, btn.ghost)} onClick={() => setAdding(false)}>Cancel</button>
                 <button type="button" className={cx(btn.base, btn.pri)} disabled={!draft.name.trim() || !draft.address.trim()} onClick={addPoint}>Save</button>

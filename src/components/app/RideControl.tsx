@@ -3,6 +3,8 @@
 import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
 import { saveRideChoice } from "@/app/app/actions";
 import type { RideMode } from "@/lib/data/home";
+import { AddressField, type PlaceValue } from "@/components/map/MapPicker";
+import { RoutePreview } from "@/components/map/RoutePreview";
 
 export type RideControlProps = {
   eventId: string;
@@ -11,6 +13,8 @@ export type RideControlProps = {
   activity?: string | null;
   time: string; // HH:MM
   place: string | null;
+  placeLat?: number | null;
+  placeLng?: number | null;
   date: string; // YYYY-MM-DD
   dateLabel: string; // "Thu 15 Oct"
   mode: RideMode | null;
@@ -19,9 +23,11 @@ export type RideControlProps = {
   eventKidIds: string[];
   friends: { id: string; name: string; labels: string[] }[];
   homeAddress: string | null;
-  defaultPickup?: string | null; // "Name, address" of the default pick-up point, null = home
+  homeLat?: number | null;
+  homeLng?: number | null;
+  defaultPickup?: PlaceValue | null; // default pick-up point when it isn't home
   firstName: string;
-  myRide: { seats: number; pickup: string | null; pickupTime: string | null } | null;
+  myRide: { seats: number; pickup: string | null; pickupTime: string | null; pickupLat?: number | null; pickupLng?: number | null } | null;
 };
 
 const CHOICES: { mode: RideMode; label: string; short: string }[] = [
@@ -224,7 +230,14 @@ function RideDialog(p: DialogProps) {
     ? p.myRide.pickup === "School gate" ? "school" : p.myRide.pickup === (p.homeAddress || "My home") || p.myRide.pickup === "My home" ? "home" : "other"
     : p.defaultPickup ? "other" : "home";
   const [pick, setPick] = useState<"home" | "school" | "other">(initialPick);
-  const [pickText, setPickText] = useState(initialPick === "other" ? (p.myRide?.pickup ?? p.defaultPickup ?? "") : "");
+  const [other, setOther] = useState<PlaceValue>(() =>
+    initialPick !== "other"
+      ? { address: "" }
+      : p.myRide?.pickup
+        ? { address: p.myRide.pickup, lat: p.myRide.pickupLat, lng: p.myRide.pickupLng }
+        : (p.defaultPickup ?? { address: "" }),
+  );
+  const pickText = other.address;
   const [time, setTime] = useState(p.myRide?.pickupTime?.slice(0, 5) || minus30(p.time));
   const [recips, setRecips] = useState<string[]>(() => {
     const s = suggested(p.friends, p.title, p.activity, p.category).map((f) => f.id);
@@ -241,6 +254,8 @@ function RideDialog(p: DialogProps) {
 
   const kidNames = p.kids.filter((k) => kids.includes(k.id)).map((k) => k.name);
   const pickupText = pick === "home" ? p.homeAddress || "My home" : pick === "school" ? "School gate" : pickText.trim();
+  const pickupAt =
+    pick === "home" ? { lat: p.homeLat ?? null, lng: p.homeLng ?? null } : pick === "other" ? { lat: other.lat ?? null, lng: other.lng ?? null } : { lat: null, lng: null };
   const defaultNote = J
     ? `Hi! ${kidNames.join(" and ")} need${kidNames.length > 1 ? "" : "s"} a ride to ${p.title} on ${p.dateLabel} (${p.time}). Could anyone take ${kidNames.length > 1 ? "them" : "them along"}? Thanks, ${p.firstName}`
     : `Hi! I’m driving to ${p.title} on ${p.dateLabel} and have ${seats} free seat${seats > 1 ? "s" : ""}. Pick-up at ${time} from ${pick === "home" ? "my home" : pick === "school" ? "the school gate" : pickText.trim()}. Reply if your kid wants to join! ${p.firstName}`;
@@ -264,6 +279,8 @@ function RideDialog(p: DialogProps) {
         note,
         seats,
         pickup: pickupText,
+        pickupLat: pickupAt.lat,
+        pickupLng: pickupAt.lng,
         pickupTime: time,
       });
       if (res.ok) p.onDone(res.message);
@@ -375,12 +392,12 @@ function RideDialog(p: DialogProps) {
                 </label>
               ))}
               {pick === "other" && (
-                <input
-                  aria-label="Where will you pick the kids up?"
+                <AddressField
+                  value={other}
+                  onChange={setOther}
                   placeholder="e.g. Bikás park, bus stop"
-                  value={pickText}
-                  onChange={(e) => setPickText(e.target.value)}
-                  className="min-h-12 rounded-2xl border-0 bg-canvas px-4 text-base outline-none focus:bg-white focus:shadow-[inset_0_0_0_2px_#5833A7] focus:ring-4 focus:ring-p100"
+                  title="Choose the pick-up point"
+                  inputClassName="min-h-12 w-full rounded-2xl border-0 bg-canvas px-4 text-base outline-none focus:bg-white focus:shadow-[inset_0_0_0_2px_#5833A7] focus:ring-4 focus:ring-p100"
                 />
               )}
             </fieldset>
@@ -391,6 +408,11 @@ function RideDialog(p: DialogProps) {
             <span className="text-xs text-ink-3">
               The event starts at {p.time}{p.place ? ` at ${p.place}` : ""}.
             </span>
+            <RoutePreview
+              height="h-[180px]"
+              pickups={pickupAt.lat != null && pickupAt.lng != null ? [{ lat: pickupAt.lat, lng: pickupAt.lng, label: pickupText }] : []}
+              place={p.placeLat != null && p.placeLng != null ? { lat: p.placeLat, lng: p.placeLng, label: p.place ?? p.title } : null}
+            />
           </div>
         )}
 

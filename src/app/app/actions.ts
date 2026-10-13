@@ -14,6 +14,8 @@ export type RideChoiceInput = {
   seats?: number;
   pickup?: string;
   pickupTime?: string; // HH:MM
+  pickupLat?: number | null;
+  pickupLng?: number | null;
 };
 
 export type ActionResult = { ok: true; message: string } | { ok: false; error: string };
@@ -67,6 +69,10 @@ export async function saveRideChoice(input: RideChoiceInput): Promise<ActionResu
     if (!pickup) return { ok: false, error: "Tell parents where you'll pick the kids up." };
     if (!TIME.test(pickupTime)) return { ok: false, error: "Enter a pick-up time, like 16:00." };
   }
+  // Map point of the pick-up, if the parent chose one (the database fills "My home" itself).
+  const lat = Number(input.pickupLat);
+  const lng = Number(input.pickupLng);
+  const pinned = input.pickupLat != null && input.pickupLng != null && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
 
   // The parent's own ride offer follows the choice. It is saved first, so the note friends get includes it.
   const { data: mine } = await supabase
@@ -79,7 +85,14 @@ export async function saveRideChoice(input: RideChoiceInput): Promise<ActionResu
     .maybeSingle();
 
   if (mode === "drive") {
-    const ride = { seats, pickup, pickup_time: pickupTime, status: "offered" as const };
+    const ride = {
+      seats,
+      pickup,
+      pickup_time: pickupTime,
+      pickup_lat: pinned ? lat : null,
+      pickup_lng: pinned ? lng : null,
+      status: "offered" as const,
+    };
     const { error } = mine
       ? await supabase.from("rides").update(ride).eq("id", mine.id)
       : await supabase.from("rides").insert({ ...ride, event_id: eventId, ride_date: date, driver_id: uid });
@@ -141,9 +154,10 @@ export async function offerFromRequest(notificationId: string): Promise<ActionRe
   if (!n || n.kind !== "request" || !n.event_id || !n.ride_date) return { ok: false, error: "This request is no longer available." };
   if (n.ride_date < today()) return { ok: false, error: "This event is already over." };
 
-  const [{ data: ev }, { data: req }] = await Promise.all([
+  const [{ data: ev }, { data: req }, { data: asker }] = await Promise.all([
     s.supabase.from("events").select("start_time").eq("id", n.event_id).maybeSingle(),
     s.supabase.from("ride_choices").select("child_ids").eq("event_id", n.event_id).eq("ride_date", n.ride_date).eq("parent_id", n.actor_id).maybeSingle(),
+    s.supabase.from("profiles").select("home_lat, home_lng").eq("id", n.actor_id).maybeSingle(),
   ]);
   if (!ev) return { ok: false, error: "This request is no longer available." };
 
@@ -153,7 +167,7 @@ export async function offerFromRequest(notificationId: string): Promise<ActionRe
   const seats = Math.max(1, Math.min(8, req?.child_ids?.length ?? 1));
 
   const { error } = await s.supabase.from("rides").upsert(
-    { event_id: n.event_id, ride_date: n.ride_date, driver_id: s.uid, seats, pickup: "At your home", pickup_time: pickupTime, status: "offered" },
+    { event_id: n.event_id, ride_date: n.ride_date, driver_id: s.uid, seats, pickup: "At your home", pickup_time: pickupTime, pickup_lat: asker?.home_lat ?? null, pickup_lng: asker?.home_lng ?? null, status: "offered" },
     { onConflict: "event_id,ride_date,driver_id" },
   );
   if (error) return { ok: false, error: "Your offer couldn't be sent. Please try again." };
