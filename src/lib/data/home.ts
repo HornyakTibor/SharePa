@@ -70,6 +70,8 @@ export type HomeData = {
   };
   today: string;
   week: { date: string; items: Occurrence[] }[];
+  /** The calendar the parent is looking at: one day, a week, or a month grid (6 weeks). */
+  cal: CalendarView;
   upcoming: Occurrence[];
   children: Child[];
   friends: Friend[];
@@ -82,13 +84,41 @@ export type HomeData = {
 
 const UPCOMING_DAYS = 14;
 
+export type CalendarMode = "day" | "week" | "month";
+export type CalendarView = {
+  mode: CalendarMode;
+  /** The date the view is built around (YYYY-MM-DD). */
+  anchor: string;
+  days: { date: string; items: Occurrence[] }[];
+};
+
+/** First and last date shown by a calendar view. Month views show 6 full weeks, Monday first. */
+export function calendarRange(mode: CalendarMode, anchor: string): { start: string; end: string } {
+  if (mode === "day") return { start: anchor, end: anchor };
+  if (mode === "week") {
+    const start = startOfWeek(anchor);
+    return { start, end: addDays(start, 6) };
+  }
+  const start = startOfWeek(`${anchor.slice(0, 8)}01`);
+  return { start, end: addDays(start, 41) };
+}
+
 /** Everything the home page shows, read with the parent's own permissions. */
-export async function loadHome(supabase: SupabaseClient, userId: string): Promise<HomeData> {
+export async function loadHome(
+  supabase: SupabaseClient,
+  userId: string,
+  view: { mode?: CalendarMode; anchor?: string } = {},
+): Promise<HomeData> {
   const now = today();
   const time = nowTime();
   const weekStart = startOfWeek(now);
-  const rangeEnd = addDays(now, UPCOMING_DAYS - 1);
-  const ridesFrom = weekStart < now ? weekStart : now;
+  const calMode: CalendarMode = view.mode ?? "week";
+  const anchor = view.anchor && /^\d{4}-\d{2}-\d{2}$/.test(view.anchor) ? view.anchor : now;
+  const calRange = calendarRange(calMode, anchor);
+  // Rides and choices are read for everything on screen: this week, the next 14 days and the calendar view.
+  const upcomingEnd = addDays(now, UPCOMING_DAYS - 1);
+  const rangeEnd = [upcomingEnd, addDays(weekStart, 6), calRange.end].sort().at(-1)!;
+  const ridesFrom = [weekStart, now, calRange.start].sort()[0];
 
   const [profileRes, childrenRes, eventsRes, friendsRes, notifRes] = await Promise.all([
     supabase.from("profiles").select("full_name, is_demo, address, home_lat, home_lng, onboarded_at, pickup_points, default_pickup").eq("id", userId).maybeSingle(),
@@ -189,6 +219,11 @@ export async function loadHome(supabase: SupabaseClient, userId: string): Promis
     return { date, items: events.filter((e) => e.weekday === i).map((e) => occurrence(e, date)) };
   });
 
+  const calDays: CalendarView["days"] = [];
+  for (let d = calRange.start; d <= calRange.end; d = addDays(d, 1)) {
+    calDays.push({ date: d, items: events.filter((e) => e.weekday === weekday(d)).map((e) => occurrence(e, d)) });
+  }
+
   const upcoming: Occurrence[] = [];
   for (let i = 0; i < UPCOMING_DAYS; i++) {
     const date = addDays(now, i);
@@ -228,6 +263,7 @@ export async function loadHome(supabase: SupabaseClient, userId: string): Promis
     },
     today: now,
     week,
+    cal: { mode: calMode, anchor, days: calDays },
     upcoming,
     children: childrenRes.data ?? [],
     friends: (friendsRes.data ?? [])

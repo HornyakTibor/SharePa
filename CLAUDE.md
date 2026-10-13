@@ -47,6 +47,10 @@ users (parents), children, events (category + activity), places / pick-up points
 - Guided tour (`src/components/app/Tour.tsx`, `HOME_TOUR`): spotlight + card, targets marked with `data-tour="week|ride|views|bell|profile|setup"`; starts automatically on a demo visitor's first visit (localStorage `sharepa-tour-done`), skips steps whose target is missing.
 - `/api/keep-alive` is hit daily by Vercel Cron (`vercel.json`) so the free Supabase project never pauses.
 
+## Calendar views
+- Home calendar (`src/components/app/WeekCalendar.tsx`) has Day / Week / Month views like the prototype: ‹ Today › navigation and a segmented switch, all plain links `/app?cal=day|week|month&d=YYYY-MM-DD` (default: this week). Day = hour lines (07–20, wider if needed) with full ride controls; Week = the 7 columns; Month = 6-week grid with coloured chips (✓ ride sorted, orange dot = still needs a ride, "+N more"), day numbers open the day view.
+- `loadHome(supabase, uid, { mode, anchor })` builds `data.cal` (`calendarRange()` in `src/lib/data/home.ts`) and reads rides/choices for the whole visible range.
+
 ## Rides UI
 - Each upcoming event occurrence shows a status chip + Manage ride menu (`src/components/app/RideControl.tsx`, `OccurrenceRide.tsx`): join (pick kids → notify friends + note), drive (seats, pick-up, time → notify + note), no ride needed. Friends whose labels match the event are pre-ticked. Open offers show as "N driving offers" + See offers dialog with Approve (`OffersButton.tsx`). Header bell (`NotificationBell.tsx`) lists notifications; offers link to `/app?view=list&offers=<event>_<date>` (auto-opens the dialog); requests have "I can drive" (`offerFromRequest`). In-app + web push (see PWA & push); no email yet.
 

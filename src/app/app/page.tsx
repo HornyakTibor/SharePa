@@ -19,13 +19,14 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Home – SharePa" };
 
-export default async function AppHome({ searchParams }: { searchParams: Promise<{ view?: string; offers?: string }> }) {
-  const { view, offers } = await searchParams;
+export default async function AppHome({ searchParams }: { searchParams: Promise<{ view?: string; offers?: string; cal?: string; d?: string }> }) {
+  const { view, offers, cal, d } = await searchParams;
+  const calMode = cal === "day" || cal === "month" ? cal : "week";
   const supabase = await createClient();
   const { data: auth } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
   if (!supabase || !auth.user) redirect("/login?next=/app");
 
-  const [data, setup] = await Promise.all([loadHome(supabase, auth.user.id), loadSetup(supabase, auth.user.id, auth.user.email ?? "")]);
+  const [data, setup] = await Promise.all([loadHome(supabase, auth.user.id, { mode: calMode, anchor: d }), loadSetup(supabase, auth.user.id, auth.user.email ?? "")]);
   // New parents start with the set-up steps (they can skip any of them).
   if (!data.me.isDemo && !data.me.onboarded) redirect("/app/setup");
   const setupDone = setup.checks.every(Boolean);
@@ -51,7 +52,7 @@ export default async function AppHome({ searchParams }: { searchParams: Promise<
         {!setupDone && <div data-tour="setup"><SetupCard checks={setup.checks} /></div>}
         {data.week.some((d) => d.items.length) ? (
           <HomeViews
-            initial={view === "list" ? "list" : "cal"}
+            initial={view === "list" && !cal ? "list" : "cal"}
             calendar={<WeekCalendar data={data} />}
             list={<RidesCard data={data} />}
           />
