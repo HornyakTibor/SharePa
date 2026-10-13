@@ -9,7 +9,7 @@ import { btn, cx, inputCls, Label } from "./ui";
 import { AddressField, type PlaceValue } from "@/components/map/MapPicker";
 
 /** Step 4. The footer's Continue button submits this form (id "step-form"). */
-export function StepProfile({ me }: { me: SetupData["me"] }) {
+export function StepProfile({ me, next }: { me: SetupData["me"]; next?: string }) {
   const [state, action] = useActionState(saveProfile, undefined);
   const [home, setHome] = useState<PlaceValue>({ address: me.address, lat: me.homeLat, lng: me.homeLng });
   const address = home.address;
@@ -30,6 +30,7 @@ export function StepProfile({ me }: { me: SetupData["me"] }) {
 
   return (
     <form id="step-form" action={action} className="flex flex-col gap-5">
+      {next && <input type="hidden" name="next" value={next} />}
       <FormMessage error={state?.error} />
       <input type="hidden" name="pickupPoints" value={JSON.stringify(points)} />
       <input type="hidden" name="defaultPickup" value={pick} />

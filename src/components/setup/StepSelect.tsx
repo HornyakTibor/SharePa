@@ -8,12 +8,13 @@ import { btn, cx, Note, WeekGrid } from "./ui";
 const KIND = { child: "Kids", family: "Family", personal: "Personal" } as const;
 
 /** Step 2: tick the events SharePa should use. The footer's "Apply for SharePa" submits this form. */
-export function StepSelect({ events, dates }: { events: SetupEvent[]; dates: string[] }) {
+export function StepSelect({ events, dates, next }: { events: SetupEvent[]; dates: string[]; next?: string }) {
   const [sel, setSel] = useState<Set<string>>(() => new Set(events.filter((e) => !e.hidden).map((e) => e.id)));
   const toggle = (id: string) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
 
   return (
     <form id="step-form" action={applyEventSelection} className="flex flex-col gap-4">
+      {next && <input type="hidden" name="next" value={next} />}
       <input type="hidden" name="selected" value={[...sel].join(",")} />
       <Note>
         <b>Your calendar has personal, family and kids’ events.</b> Select only the ones you want to see in SharePa — usually your children’s activities that need a ride — and the rest stay hidden from you and other parents.

@@ -6,6 +6,8 @@ export type SetupEvent = {
   id: string;
   title: string;
   place: string | null;
+  placeLat: number | null;
+  placeLng: number | null;
   weekday: number;
   time: string; // HH:MM
   kind: "child" | "family" | "personal";
@@ -75,7 +77,7 @@ export async function loadSetup(supabase: SupabaseClient, userId: string, email:
       .maybeSingle(),
     supabase
       .from("events")
-      .select("id, title, place, weekday, start_time, kind, hidden, category, activity, needs_ride, event_children(child_id)")
+      .select("id, title, place, place_lat, place_lng, weekday, start_time, kind, hidden, category, activity, needs_ride, event_children(child_id)")
       .eq("owner_id", userId)
       .order("start_time"),
     supabase.from("children").select("id, name, phone").eq("parent_id", userId).order("created_at"),
@@ -103,6 +105,8 @@ export async function loadSetup(supabase: SupabaseClient, userId: string, email:
       id: e.id,
       title: e.title,
       place: e.place,
+      placeLat: e.place_lat,
+      placeLng: e.place_lng,
       weekday: e.weekday,
       time: String(e.start_time).slice(0, 5),
       kind: e.kind,
