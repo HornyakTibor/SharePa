@@ -26,10 +26,21 @@ export type Ride = {
   passengerIds: string[];
 };
 export type Friend = { id: string; name: string; labels: string[] };
-export type Occurrence = { event: EventRow; date: string; ride: Ride | null; past: boolean };
+export type RideMode = "join" | "drive" | "none";
+export type RideChoice = { mode: RideMode; childIds: string[]; notifiedIds: string[]; note: string | null };
+export type Occurrence = {
+  event: EventRow;
+  date: string;
+  /** Best ride for this occurrence (confirmed beats offered), whoever drives. */
+  ride: Ride | null;
+  /** The parent's own offered ride, if they drive. */
+  myRide: Ride | null;
+  choice: RideChoice | null;
+  past: boolean;
+};
 
 export type HomeData = {
-  me: { id: string; name: string; isDemo: boolean };
+  me: { id: string; name: string; isDemo: boolean; address: string | null };
   today: string;
   week: { date: string; items: Occurrence[] }[];
   upcoming: Occurrence[];
@@ -50,7 +61,7 @@ export async function loadHome(supabase: SupabaseClient, userId: string): Promis
   const ridesFrom = weekStart < now ? weekStart : now;
 
   const [profileRes, childrenRes, eventsRes, friendsRes] = await Promise.all([
-    supabase.from("profiles").select("full_name, is_demo").eq("id", userId).maybeSingle(),
+    supabase.from("profiles").select("full_name, is_demo, address").eq("id", userId).maybeSingle(),
     supabase.from("children").select("id, name").eq("parent_id", userId).order("name"),
     supabase
       .from("events")
@@ -98,17 +109,38 @@ export async function loadHome(supabase: SupabaseClient, userId: string): Promis
     }));
   }
 
+  const choices = new Map<string, RideChoice>();
+  if (events.length) {
+    const { data } = await supabase
+      .from("ride_choices")
+      .select("event_id, ride_date, mode, child_ids, notified_ids, note")
+      .eq("parent_id", userId)
+      .gte("ride_date", ridesFrom)
+      .lte("ride_date", rangeEnd);
+    (data ?? []).forEach((c) =>
+      choices.set(`${c.event_id}|${c.ride_date}`, { mode: c.mode, childIds: c.child_ids ?? [], notifiedIds: c.notified_ids ?? [], note: c.note }),
+    );
+  }
+
   /** The ride for one occurrence: a confirmed one wins over an offer. */
   const rideFor = (eventId: string, date: string) => {
     const matches = rides.filter((r) => r.event_id === eventId && r.ride_date === date);
     return matches.find((r) => r.status === "confirmed") ?? matches[0] ?? null;
   };
-  const occurrence = (event: EventRow, date: string): Occurrence => ({
-    event,
-    date,
-    ride: event.needs_ride ? rideFor(event.id, date) : null,
-    past: date < now || (date === now && event.start_time.slice(0, 5) < time),
-  });
+  const occurrence = (event: EventRow, date: string): Occurrence => {
+    const myRide = rides.find((r) => r.event_id === event.id && r.ride_date === date && r.driver_id === userId) ?? null;
+    let choice = choices.get(`${event.id}|${date}`) ?? null;
+    // A ride the parent offers counts as the "drive" choice even without a saved choice (e.g. demo seed data).
+    if (!choice && myRide) choice = { mode: "drive", childIds: [], notifiedIds: [], note: null };
+    return {
+      event,
+      date,
+      ride: event.needs_ride ? rideFor(event.id, date) : null,
+      myRide,
+      choice,
+      past: date < now || (date === now && event.start_time.slice(0, 5) < time),
+    };
+  };
 
   const week = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(weekStart, i);
@@ -142,7 +174,12 @@ export async function loadHome(supabase: SupabaseClient, userId: string): Promis
     .forEach((r) => r.passengerIds.forEach((id) => (ridesPerChild[id] = (ridesPerChild[id] ?? 0) + 1)));
 
   return {
-    me: { id: userId, name: profileRes.data?.full_name || "there", isDemo: Boolean(profileRes.data?.is_demo) },
+    me: {
+      id: userId,
+      name: profileRes.data?.full_name || "there",
+      isDemo: Boolean(profileRes.data?.is_demo),
+      address: profileRes.data?.address ?? null,
+    },
     today: now,
     week,
     upcoming,

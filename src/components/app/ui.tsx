@@ -59,10 +59,26 @@ const first = (name: string) => name.split(" ")[0];
 export function rideStatus(o: Occurrence, meId: string): { text: string; tone: "ok" | "mine" | "open" | "none" } | null {
   if (!o.event.needs_ride) return null;
   const r = o.ride;
-  if (!r) return { text: "No ride yet", tone: "none" };
-  if (r.driver_id === meId) return { text: `You drive · ${r.seats} free seat${r.seats === 1 ? "" : "s"}`, tone: "mine" };
-  if (r.status === "confirmed") return { text: `Ride ✓ · ${first(r.driverName)} drives`, tone: "ok" };
-  return { text: `${first(r.driverName)} offers ${r.seats} seat${r.seats === 1 ? "" : "s"}`, tone: "open" };
+  if (r && r.driver_id !== meId && r.status === "confirmed") return { text: `Ride ✓ · ${first(r.driverName)} drives`, tone: "ok" };
+  if (o.choice?.mode === "none") return { text: "No ride needed", tone: "none" };
+  if (o.choice?.mode === "join") return { text: "Ride requested", tone: "open" };
+  if (o.myRide) return { text: `You drive · ${o.myRide.seats} free seat${o.myRide.seats === 1 ? "" : "s"}`, tone: "mine" };
+  if (r && r.driver_id !== meId) return { text: `${first(r.driverName)} offers ${r.seats} seat${r.seats === 1 ? "" : "s"}`, tone: "open" };
+  return { text: "No ride yet", tone: "none" };
+}
+
+/** One quiet line under the status: who was notified, or the pick-up details. */
+export function rideDetail(o: Occurrence, meId: string, kidNames: (ids: string[]) => string[]): string | null {
+  const c = o.choice;
+  const r = o.ride;
+  if (r && r.status === "confirmed" && r.driver_id !== meId && r.pickup) return `Pick-up ${(r.pickup_time ?? "").slice(0, 5)} · ${r.pickup}`;
+  if (c?.mode === "join") {
+    const n = c.notifiedIds.length;
+    const kids = kidNames(c.childIds).join(", ");
+    return [n ? `Note sent to ${n} parent${n === 1 ? "" : "s"}` : null, kids].filter(Boolean).join(" · ") || null;
+  }
+  if (o.myRide) return `Pick-up ${(o.myRide.pickup_time ?? "").slice(0, 5)} · ${o.myRide.pickup ?? ""}`;
+  return null;
 }
 
 export function RideChip({ o, meId }: { o: Occurrence; meId: string }) {
