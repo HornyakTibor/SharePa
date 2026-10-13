@@ -43,6 +43,8 @@ users (parents), children, events (category + activity), places / pick-up points
 ## Demo mode
 - Demo family: Kata Molnár (`demo@sharepa.tiborhornyak.hu`) + 7 friends (`*@demo.sharepa.tiborhornyak.hu`), `profiles.is_demo = true`. `public.reset_demo()` rebuilds it; pg_cron job `reset-demo-family` runs 02:00 UTC. One-time setup script: `supabase/run-once-demo-family.sql`.
 - "Try the demo" (`tryDemo` server action) signs in with `DEMO_EMAIL` / `DEMO_PASSWORD` (Vercel env, server-only). Demo accounts can't change their password.
+- Demo bar on Home (`src/components/app/DemoBar.tsx`): "Take the tour" and "Start fresh" (`public.reset_my_demo()`: demo account only, at most once a minute; runs `reset_demo()` + `reset_demo_extras()`).
+- Guided tour (`src/components/app/Tour.tsx`, `HOME_TOUR`): spotlight + card, targets marked with `data-tour="week|ride|views|bell|profile|setup"`; starts automatically on a demo visitor's first visit (localStorage `sharepa-tour-done`), skips steps whose target is missing.
 - `/api/keep-alive` is hit daily by Vercel Cron (`vercel.json`) so the free Supabase project never pauses.
 
 ## Rides UI
@@ -75,4 +77,4 @@ users (parents), children, events (category + activity), places / pick-up points
 ## Way of working
 - One feature per branch / pull request. Plan first, then build. Keep this file updated with decisions.
 - `npm run build` and `npm run lint` must pass before opening a pull request.
-- Build order: design-system components → database → login → onboarding (7 skippable steps) → calendar (.ics) → friends & invites → rides → maps (done) → PWA & push (done) → demo mode polish.
+- Build order: design-system components → database → login → onboarding (7 skippable steps) → calendar (.ics) → friends & invites → rides → maps (done) → PWA & push (done) → demo mode polish (tour + start fresh done).

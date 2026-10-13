@@ -15,6 +15,7 @@ export function AppHeader({ name, notifications = [], active }: { name: string; 
         <NotificationBell notifications={notifications} />
         <Link
           href="/app/profile"
+          data-tour="profile"
           aria-current={on ? "page" : undefined}
           aria-label={`Profile – ${name}`}
           className={`flex items-center gap-2.5 rounded-full py-1 pr-1 pl-1 text-sm font-semibold no-underline transition-colors sm:pr-4 ${on ? "bg-p100 text-p600" : "text-ink-2 hover:bg-p100"}`}

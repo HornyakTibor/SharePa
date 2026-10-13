@@ -9,6 +9,8 @@ import { RidesCard } from "@/components/app/RidesCard";
 import { Panels } from "@/components/app/Panels";
 import { HomeViews } from "@/components/app/HomeViews";
 import { SetupCard } from "@/components/app/SetupCard";
+import { DemoBar } from "@/components/app/DemoBar";
+import { Tour } from "@/components/app/Tour";
 import { loadSetup } from "@/lib/data/setup";
 import Link from "next/link";
 
@@ -34,26 +36,19 @@ export default async function AppHome({ searchParams }: { searchParams: Promise<
     <div className="min-h-screen bg-canvas">
       <AppHeader name={data.me.name} notifications={data.notifications} />
       <main className="mx-auto flex max-w-[1232px] flex-col gap-6 px-4 pt-8 pb-24 sm:px-8">
-        {data.me.isDemo && (
-          <div role="note" className="flex flex-wrap items-center gap-3 rounded-[20px] bg-[linear-gradient(95deg,#150830_0%,#341C67_50%,#5833A7_100%)] px-5 py-4 text-white">
-            <span className="rounded-full bg-yellow px-2.5 py-1 text-xs font-bold text-p700">Demo</span>
-            <p className="m-0 grow text-sm">
-              You&apos;re exploring SharePa as <b>{data.me.name}</b>, a sample parent. Everything resets every night, so feel free to click around.
-            </p>
-          </div>
-        )}
+        {data.me.isDemo && <DemoBar name={data.me.name} />}
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="m-0 text-xs font-semibold uppercase tracking-[.08em] text-ink-3">{longDate(data.today)}</p>
             <h1 className="mt-1 mb-0 text-[31px] font-semibold text-navy">Hi {first}</h1>
           </div>
           {setupDone && (
-            <Link href="/app/setup" className="rounded-full px-4 py-2 text-sm font-semibold text-p500 no-underline hover:bg-p100">
+            <Link href="/app/setup" data-tour="setup" className="rounded-full px-4 py-2 text-sm font-semibold text-p500 no-underline hover:bg-p100">
               Set-up guide
             </Link>
           )}
         </div>
-        {!setupDone && <SetupCard checks={setup.checks} />}
+        {!setupDone && <div data-tour="setup"><SetupCard checks={setup.checks} /></div>}
         {data.week.some((d) => d.items.length) ? (
           <HomeViews
             initial={view === "list" ? "list" : "cal"}
@@ -64,6 +59,7 @@ export default async function AppHome({ searchParams }: { searchParams: Promise<
           <WeekCalendar data={data} />
         )}
         <Panels data={data} />
+        <Tour autoStart={data.me.isDemo} />
       </main>
     </div>
   );

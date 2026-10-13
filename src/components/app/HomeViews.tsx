@@ -50,6 +50,7 @@ export function HomeViews({ initial, calendar, list }: { initial: View; calendar
     <div className="flex flex-col gap-3.5">
       <div
         role="tablist"
+        data-tour="views"
         aria-label="Home view"
         onKeyDown={onKeyDown}
         className="inline-flex gap-1 self-start rounded-full bg-white p-1 shadow-[0_12px_40px_rgba(9,16,29,.06)]"
