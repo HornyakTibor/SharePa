@@ -1,14 +1,13 @@
 import Link from "next/link";
 
-/** The SharePa car mark, drawn as a stroke icon. */
-export function CarMark({ className = "h-[22px] w-[22px]" }: { className?: string }) {
+/** The SharePa mark: three stacked lanes on a purple tile (also the app icon and favicon). */
+export function LogoMark({ className = "h-9 w-9" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 16l1.6-5.2A2 2 0 0 1 8.5 9.4h7a2 2 0 0 1 1.9 1.4L19 16" />
-      <rect x="3.5" y="15" width="17" height="4" rx="1.5" />
-      <circle cx="7.5" cy="19.5" r="1.2" />
-      <circle cx="16.5" cy="19.5" r="1.2" />
-      <path d="M9 6.5a3 3 0 0 1 6 0" />
+    <svg viewBox="0 0 36 36" className={`shrink-0 ${className}`} fill="none" aria-hidden="true">
+      <rect width="36" height="36" rx="4" fill="#5833A7" />
+      <path d="M7 14C7 10.6863 9.68629 8 13 8H29C29 11.3137 26.3137 14 23 14H7Z" fill="#E2DCF3" />
+      <path opacity="0.66" d="M7 15H23C26.3137 15 29 17.6863 29 21H13C9.68629 21 7 18.3137 7 15Z" fill="#E2DCF3" />
+      <path opacity="0.33" d="M7 28C7 24.6863 9.68629 22 13 22H29C29 25.3137 26.3137 28 23 28H7Z" fill="#E2DCF3" />
     </svg>
   );
 }
@@ -17,9 +16,7 @@ export function CarMark({ className = "h-[22px] w-[22px]" }: { className?: strin
 export function Logo({ tone = "dark", href = "/" }: { tone?: "dark" | "light"; href?: string | null }) {
   const content = (
     <>
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-p500 text-white">
-        <CarMark />
-      </span>
+      <LogoMark />
       <span className={`text-[22px] font-extrabold tracking-[-0.5px] ${tone === "dark" ? "text-white" : "text-navy"}`}>
         Share<span className={tone === "dark" ? "text-lavender" : "text-p500"}>Pa</span>
       </span>

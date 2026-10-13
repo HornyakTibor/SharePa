@@ -19,7 +19,6 @@ export const metadata: Metadata = {
   description: "Car-pool school runs and kids' activities with parents you trust.",
   applicationName: "SharePa",
   appleWebApp: { capable: true, title: "SharePa", statusBarStyle: "default" },
-  icons: { apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = { themeColor: "#5833A7" };
