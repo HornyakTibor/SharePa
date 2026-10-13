@@ -35,7 +35,7 @@ users (parents), children, events (category + activity), places / pick-up points
 - The app lives under `/app` (logged in only). Google / Microsoft sign-in to add later.
 
 ## Database (Supabase)
-- Migrations in `supabase/migrations/` (applied to the live project). Tables: profiles (auto-created on sign-up), children, friendships (one row per direction, owner's labels), events (weekly: weekday 0=Mon + start_time), event_children, rides (per event date + driver), ride_passengers. RLS on all; helpers `is_friend`, `can_see_event`, `can_see_ride`.
+- Migrations in `supabase/migrations/` (applied to the live project). Tables: profiles (auto-created on sign-up), children, friendships (one row per direction, owner's labels), events (weekly: weekday 0=Mon + start_time), event_children, rides (per event date + driver), ride_passengers. RLS on all; helpers `private.is_friend`, `private.can_see_event`, `private.can_see_ride` (private schema, not callable via the API).
 - Home data is loaded in `src/lib/data/home.ts` with the parent's own session (RLS decides visibility). Dates are Budapest-time ISO strings (`src/lib/dates.ts`).
 
 ## Demo mode
