@@ -103,7 +103,9 @@ export function NotificationBell({ notifications }: { notifications: Notificatio
         >
           <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
             <h2 className="m-0 text-lg font-semibold text-navy">Notifications</h2>
-            <span className="text-xs text-ink-3">{notifications.length ? `${notifications.length} recent` : ""}</span>
+            <Link href="/app/profile#device" onClick={() => setOpen(false)} className="text-xs font-semibold text-p500 no-underline hover:text-p600">
+              Get them on your phone
+            </Link>
           </div>
           <div className="flex flex-col gap-2.5 overflow-y-auto p-3" aria-live="polite">
             {notifications.length === 0 && (

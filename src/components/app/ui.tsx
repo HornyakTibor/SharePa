@@ -12,9 +12,9 @@ export function CategoryTag({ category, activity }: { category: string | null; a
   );
 }
 
-export function Card({ children, className = "", label }: { children: React.ReactNode; className?: string; label?: string }) {
+export function Card({ children, className = "", label, id }: { children: React.ReactNode; className?: string; label?: string; id?: string }) {
   return (
-    <section aria-label={label} className={`min-w-0 rounded-[28px] bg-white p-6 shadow-[0_12px_40px_rgba(9,16,29,.06)] sm:p-7 ${className}`}>
+    <section id={id} aria-label={label} className={`min-w-0 rounded-[28px] bg-white p-6 shadow-[0_12px_40px_rgba(9,16,29,.06)] sm:p-7 ${className}`}>
       {children}
     </section>
   );
