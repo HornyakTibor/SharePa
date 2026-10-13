@@ -18,7 +18,8 @@ export function OccurrenceRide({ o, data, compact = false }: { o: Occurrence; da
       {compact && detail && !o.past && <span className="text-[11px] leading-snug text-ink-3">{detail}</span>}
       {!o.past && o.offers.length > 0 && !(o.ride && o.ride.status === "confirmed") && (
         <OffersButton
-          offers={o.offers.map((r) => ({ id: r.id, driverName: r.driverName, seats: r.seats, pickup: r.pickup, pickupTime: r.pickup_time }))}
+          offers={o.offers.map((r) => ({ id: r.id, driverName: r.driverName, seats: r.seats, pickup: r.pickup, pickupTime: r.pickup_time, pickupLat: r.pickupLat, pickupLng: r.pickupLng }))}
+          place={o.event.placeLat != null && o.event.placeLng != null ? { lat: o.event.placeLat, lng: o.event.placeLng, label: o.event.place ?? o.event.title } : null}
           title={o.event.title}
           when={`${WEEKDAYS[weekday(o.date)]} ${shortDate(o.date)} · ${hhmm(o.event.start_time)}`}
           kids={names(o.choice?.childIds ?? []).join(" and ")}
@@ -34,6 +35,8 @@ export function OccurrenceRide({ o, data, compact = false }: { o: Occurrence; da
           activity={o.event.activity}
           time={hhmm(o.event.start_time)}
           place={o.event.place}
+          placeLat={o.event.placeLat}
+          placeLng={o.event.placeLng}
           date={o.date}
           dateLabel={`${WEEKDAYS[weekday(o.date)]} ${shortDate(o.date)}`}
           mode={o.choice?.mode ?? null}
@@ -42,9 +45,11 @@ export function OccurrenceRide({ o, data, compact = false }: { o: Occurrence; da
           eventKidIds={o.event.childIds}
           friends={data.friends}
           homeAddress={data.me.address}
+          homeLat={data.me.homeLat}
+          homeLng={data.me.homeLng}
           defaultPickup={data.me.defaultPickup}
           firstName={data.me.name.split(" ")[0]}
-          myRide={o.myRide ? { seats: o.myRide.seats, pickup: o.myRide.pickup, pickupTime: o.myRide.pickup_time } : null}
+          myRide={o.myRide ? { seats: o.myRide.seats, pickup: o.myRide.pickup, pickupTime: o.myRide.pickup_time, pickupLat: o.myRide.pickupLat, pickupLng: o.myRide.pickupLng } : null}
         />
       )}
     </div>

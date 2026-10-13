@@ -3,12 +3,24 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { acceptOffer } from "@/app/app/actions";
 import { Avatar } from "./Avatar";
+import { RoutePreview } from "@/components/map/RoutePreview";
+import type { LatLng } from "@/lib/geo";
 
-export type Offer = { id: string; driverName: string; seats: number; pickup: string | null; pickupTime: string | null };
+export type Offer = {
+  id: string;
+  driverName: string;
+  seats: number;
+  pickup: string | null;
+  pickupTime: string | null;
+  pickupLat?: number | null;
+  pickupLng?: number | null;
+};
+type Place = (LatLng & { label: string }) | null;
 
 /** "See offers (2)" — opens the prototype's Driving offers list, where the parent approves one. */
 export function OffersButton({
   offers,
+  place = null,
   title,
   when,
   kids,
@@ -16,6 +28,7 @@ export function OffersButton({
   autoOpen = false,
 }: {
   offers: Offer[];
+  place?: Place;
   title: string;
   when: string;
   kids: string;
@@ -46,6 +59,7 @@ export function OffersButton({
       {open && (
         <OffersDialog
           offers={offers}
+          place={place}
           title={title}
           when={when}
           kids={kids}
@@ -74,6 +88,7 @@ export function OffersButton({
 
 function OffersDialog({
   offers,
+  place,
   title,
   when,
   kids,
@@ -81,6 +96,7 @@ function OffersDialog({
   onDone,
 }: {
   offers: Offer[];
+  place: Place;
   title: string;
   when: string;
   kids: string;
@@ -129,12 +145,24 @@ function OffersDialog({
           </button>
         </div>
         <p className="m-0 text-sm text-ink-3">Pick the parent who should drive. They get a confirmation, and the others are told a ride is found.</p>
+        <RoutePreview
+          height="h-[200px]"
+          pickups={offers.map((o) => (o.pickupLat != null && o.pickupLng != null ? { lat: o.pickupLat, lng: o.pickupLng, label: `${o.driverName}: ${o.pickup ?? "pick-up"}` } : null))}
+          place={place}
+        />
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
-          {offers.map((o) => (
+          {offers.map((o, i) => (
             <li key={o.id} className="flex flex-wrap items-center gap-3 rounded-2xl bg-canvas px-4 py-3 sm:flex-nowrap">
               <Avatar name={o.driverName} />
               <div className="flex min-w-0 flex-1 flex-col">
-                <b className="text-ink">{o.driverName}</b>
+                <b className="flex items-center gap-2 text-ink">
+                  {o.driverName}
+                  {offers.length > 1 && o.pickupLat != null && (
+                    <span aria-label={`Pin ${i + 1} on the map`} className="grid h-5 w-5 place-items-center rounded-full bg-ok text-[11px] font-bold text-white">
+                      {offers.filter((x, k) => k <= i && x.pickupLat != null).length}
+                    </span>
+                  )}
+                </b>
                 <span className="text-sm text-ink-3">
                   {o.seats} free seat{o.seats === 1 ? "" : "s"}
                   {o.pickup ? ` · pick-up ${(o.pickupTime ?? "").slice(0, 5)} · ${o.pickup}` : ""}

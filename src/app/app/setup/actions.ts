@@ -13,6 +13,12 @@ export type SetupResult = { ok: true; message?: string } | { ok: false; error: s
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const clean = (v: unknown, max = 160) => String(v ?? "").trim().replace(/\s+/g, " ").slice(0, max);
+/** A latitude/longitude from the form, or null when missing or out of range. */
+const coord = (v: unknown, max: number) => {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) && Math.abs(n) <= max ? n : null;
+};
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 async function session() {
@@ -30,7 +36,15 @@ const done = (message?: string): SetupResult => {
 
 // ---------- step 1: calendar ----------
 
-type NewEvent = { title: string; place: string; weekday: number; time: string; kind?: "child" | "family" | "personal" };
+type NewEvent = {
+  title: string;
+  place: string;
+  weekday: number;
+  time: string;
+  kind?: "child" | "family" | "personal";
+  lat?: number | null;
+  lng?: number | null;
+};
 
 async function insertEvents(list: NewEvent[], source: "manual" | "ics" | "sample", hidden: boolean): Promise<SetupResult> {
   const s = await session();
@@ -40,6 +54,8 @@ async function insertEvents(list: NewEvent[], source: "manual" | "ics" | "sample
       owner_id: s.uid,
       title: clean(e.title, 120),
       place: clean(e.place) || null,
+      place_lat: coord(e.lat, 90),
+      place_lng: coord(e.lng, 180),
       weekday: Number(e.weekday),
       start_time: e.time,
       kind: e.kind ?? guessKind(e.title),
@@ -165,7 +181,7 @@ export async function saveProfile(_prev: ProfileState, formData: FormData): Prom
     const raw = JSON.parse(String(formData.get("pickupPoints") ?? "[]"));
     if (Array.isArray(raw)) {
       points = raw
-        .map((p) => ({ id: clean(p?.id, 40), name: clean(p?.name, 60), address: clean(p?.address) }))
+        .map((p) => ({ id: clean(p?.id, 40), name: clean(p?.name, 60), address: clean(p?.address), lat: coord(p?.lat, 90), lng: coord(p?.lng, 180) }))
         .filter((p) => /^[a-z0-9-]{4,40}$/i.test(p.id) && p.name && p.address)
         .slice(0, 10);
     }
@@ -181,6 +197,8 @@ export async function saveProfile(_prev: ProfileState, formData: FormData): Prom
       full_name: name,
       phone: formatHu(String(formData.get("phone") ?? "")) || null,
       address: clean(formData.get("address")) || null,
+      home_lat: coord(formData.get("addressLat"), 90),
+      home_lng: coord(formData.get("addressLng"), 180),
       emergency_name: clean(formData.get("emergencyName"), 80) || null,
       emergency_phone: formatHu(String(formData.get("emergencyPhone") ?? "")) || null,
       pickup_points: points,

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type PickupPoint = { id: string; name: string; address: string };
+export type PickupPoint = { id: string; name: string; address: string; lat?: number | null; lng?: number | null };
 
 export type SetupEvent = {
   id: string;
@@ -23,6 +23,8 @@ export type SetupData = {
     email: string;
     phone: string;
     address: string;
+    homeLat: number | null;
+    homeLng: number | null;
     emergencyName: string;
     emergencyPhone: string;
     pickupPoints: PickupPoint[];
@@ -68,7 +70,7 @@ export async function loadSetup(supabase: SupabaseClient, userId: string, email:
   const [profileRes, eventsRes, childrenRes, friendsRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("full_name, phone, address, emergency_name, emergency_phone, pickup_points, default_pickup, invite_code, is_demo")
+      .select("full_name, phone, address, home_lat, home_lng, emergency_name, emergency_phone, pickup_points, default_pickup, invite_code, is_demo")
       .eq("id", userId)
       .maybeSingle(),
     supabase
@@ -88,6 +90,8 @@ export async function loadSetup(supabase: SupabaseClient, userId: string, email:
       email,
       phone: p?.phone ?? "",
       address: p?.address ?? "",
+      homeLat: p?.home_lat ?? null,
+      homeLng: p?.home_lng ?? null,
       emergencyName: p?.emergency_name ?? "",
       emergencyPhone: p?.emergency_phone ?? "",
       pickupPoints: Array.isArray(p?.pickup_points) ? (p.pickup_points as PickupPoint[]) : [],

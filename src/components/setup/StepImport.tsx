@@ -6,6 +6,7 @@ import type { SetupEvent } from "@/lib/data/setup";
 import { parseIcs } from "@/lib/ics";
 import { WEEKDAYS } from "@/lib/dates";
 import { btn, cx, inputCls, Label, useSetupAction } from "./ui";
+import { AddressField, type PlaceValue } from "@/components/map/MapPicker";
 
 const PROVIDERS = [
   {
@@ -42,7 +43,8 @@ export function StepImport({
   const { pending, run, toast, say } = useSetupAction();
   const [provider, setProvider] = useState<string | null>(null);
   const [manualOpen, setManualOpen] = useState(events.length === 0);
-  const [form, setForm] = useState({ title: "", place: "", day: "0", time: "16:00" });
+  const [form, setForm] = useState({ title: "", day: "0", time: "16:00" });
+  const [place, setPlace] = useState<PlaceValue>({ address: "" });
   const fileRef = useRef<HTMLInputElement>(null);
 
   const onFile = async (file: File | undefined) => {
@@ -55,7 +57,6 @@ export function StepImport({
   };
 
   const titles = [...new Set(events.map((e) => e.title))];
-  const places = [...new Set(events.map((e) => e.place).filter(Boolean))] as string[];
 
   return (
     <div className="flex flex-col gap-5">
@@ -141,19 +142,23 @@ export function StepImport({
           onSubmit={(e) => {
             e.preventDefault();
             const weekday = dayOptions[Number(form.day)]?.weekday ?? 0;
-            run(() => addEvent({ title: form.title, place: form.place, weekday, time: form.time }), (r) => r.ok && setForm({ ...form, title: "", place: "" }));
+            run(
+              () => addEvent({ title: form.title, place: place.address, lat: place.lat, lng: place.lng, weekday, time: form.time }),
+              (r) => {
+                if (!r.ok) return;
+                setForm({ ...form, title: "" });
+                setPlace({ address: "" });
+              },
+            );
           }}
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <Label text="Event">
               <input className={inputCls} list="ob-titles" required placeholder="e.g. Swimming practice" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             </Label>
-            <Label text="Place">
-              <input className={inputCls} list="ob-places" placeholder="e.g. Komjádi pool" value={form.place} onChange={(e) => setForm({ ...form, place: e.target.value })} />
-            </Label>
+            <AddressField label="Place" value={place} onChange={setPlace} placeholder="e.g. Komjádi pool" title="Find the place" inputClassName={inputCls} />
           </div>
           <datalist id="ob-titles">{titles.map((t) => <option key={t} value={t} />)}</datalist>
-          <datalist id="ob-places">{places.map((t) => <option key={t} value={t} />)}</datalist>
           <div className="flex flex-wrap items-end gap-4">
             <Label text="Day" className="min-w-[200px] grow">
               <select className={inputCls} value={form.day} onChange={(e) => setForm({ ...form, day: e.target.value })}>
