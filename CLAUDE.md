@@ -48,6 +48,14 @@ users (parents), children, events (category + activity), places / pick-up points
 ## Rides UI
 - Each upcoming event occurrence shows a status chip + Manage ride menu (`src/components/app/RideControl.tsx`, `OccurrenceRide.tsx`): join (pick kids → notify friends + note), drive (seats, pick-up, time → notify + note), no ride needed. Friends whose labels match the event are pre-ticked. Open offers show as "N driving offers" + See offers dialog with Approve (`OffersButton.tsx`). Header bell (`NotificationBell.tsx`) lists notifications; offers link to `/app?view=list&offers=<event>_<date>` (auto-opens the dialog); requests have "I can drive" (`offerFromRequest`). In-app only — no push/email yet.
 
+## Onboarding (set-up)
+- `/app/setup?step=1…7` (`src/app/app/setup/`, components in `src/components/setup/`): import calendar (.ics file, sample calendar, or add manually), choose SharePa events, categorize (dialog with name-based suggestions + who goes), profile (+36 phone formatting, pick-up points), children, friends (search + invite link/QR), labels. Every step is skippable; done-checks in `src/lib/data/setup.ts`.
+- New (non-demo) parents are sent to set-up until they finish or skip it (`profiles.onboarded_at`). Home shows a "Get set up" card for skipped steps, or a "Set-up guide" link when all is done.
+- Schema: `profiles.onboarded_at / pickup_points (jsonb) / default_pickup / invite_code`, `children.phone`, `events.kind / source / hidden` (imported events start hidden; friends never see hidden events). `public.search_parents(q)` (name or exact email; demo only finds demo), `public.add_friend(id)` (both directions + 'friend' notification). Sign-up with `/signup?invite=<code>` makes inviter and new parent friends (in `handle_new_user`; not for demo inviters).
+- Demo: extra demo parents Dávid Balogh, Nóra Farkas, Tamás Papp to find and add; `private.reset_demo_extras()` (pg_cron 02:05 UTC) tidies pick-up points.
+- .ics parsing is client-side (`src/lib/ics.ts`): weekly repeating events + one-offs in the next 14 days, converted to Budapest time. Direct Google/Microsoft calendar connection is for later.
+- apply_migration tip: `cron.schedule` and big mixed scripts may be cancelled — apply them as small separate migrations.
+
 ## Way of working
 - One feature per branch / pull request. Plan first, then build. Keep this file updated with decisions.
 - `npm run build` and `npm run lint` must pass before opening a pull request.

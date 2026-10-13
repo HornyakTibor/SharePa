@@ -7,6 +7,8 @@ import type { RideMode } from "@/lib/data/home";
 export type RideControlProps = {
   eventId: string;
   title: string;
+  category?: string | null;
+  activity?: string | null;
   time: string; // HH:MM
   place: string | null;
   date: string; // YYYY-MM-DD
@@ -17,6 +19,7 @@ export type RideControlProps = {
   eventKidIds: string[];
   friends: { id: string; name: string; labels: string[] }[];
   homeAddress: string | null;
+  defaultPickup?: string | null; // "Name, address" of the default pick-up point, null = home
   firstName: string;
   myRide: { seats: number; pickup: string | null; pickupTime: string | null } | null;
 };
@@ -42,10 +45,21 @@ function minus30(time: string) {
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
-/** Friends whose labels match this activity are suggested first (e.g. "Football" for "Football match"). */
-function suggested(friends: RideControlProps["friends"], title: string) {
+/**
+ * Friends whose labels match this event are suggested first: "Football" for "Football match",
+ * "Swimming" or "Sport · Swimming" for an event categorised Sport · Swimming.
+ */
+function suggested(friends: RideControlProps["friends"], title: string, activity?: string | null, category?: string | null) {
   const t = title.toLowerCase();
-  return friends.filter((f) => f.labels.some((l) => t.includes(l.toLowerCase()) || l.toLowerCase().includes(t.split(" ")[0])));
+  const full = [category, activity].filter(Boolean).join(" · ").toLowerCase();
+  const act = (activity ?? "").toLowerCase();
+  return friends.filter((f) =>
+    f.labels.some((raw) => {
+      const l = raw.toLowerCase();
+      const tail = l.includes(" · ") ? l.split(" · ")[1] : l;
+      return (full && l === full) || (act && tail === act) || t.includes(tail) || tail.includes(t.split(" ")[0]);
+    }),
+  );
 }
 
 export function RideControl(p: RideControlProps) {
@@ -208,12 +222,12 @@ function RideDialog(p: DialogProps) {
   const [seats, setSeats] = useState(p.myRide?.seats ?? 2);
   const initialPick = p.myRide?.pickup
     ? p.myRide.pickup === "School gate" ? "school" : p.myRide.pickup === (p.homeAddress || "My home") || p.myRide.pickup === "My home" ? "home" : "other"
-    : "home";
+    : p.defaultPickup ? "other" : "home";
   const [pick, setPick] = useState<"home" | "school" | "other">(initialPick);
-  const [pickText, setPickText] = useState(initialPick === "other" ? p.myRide?.pickup ?? "" : "");
+  const [pickText, setPickText] = useState(initialPick === "other" ? (p.myRide?.pickup ?? p.defaultPickup ?? "") : "");
   const [time, setTime] = useState(p.myRide?.pickupTime?.slice(0, 5) || minus30(p.time));
   const [recips, setRecips] = useState<string[]>(() => {
-    const s = suggested(p.friends, p.title).map((f) => f.id);
+    const s = suggested(p.friends, p.title, p.activity, p.category).map((f) => f.id);
     return s.length ? s : p.friends.map((f) => f.id);
   });
   const [note, setNote] = useState("");
