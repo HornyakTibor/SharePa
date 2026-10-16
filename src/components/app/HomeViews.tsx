@@ -24,7 +24,24 @@ const TABS: { key: View; label: string; icon: React.ReactNode }[] = [
  * Home page switch between the week calendar and the rides list, as in the prototype.
  * The choice is kept in the address (?view=list) so a reload or shared link keeps it.
  */
-export function HomeViews({ initial, calendar, list }: { initial: View; calendar: React.ReactNode; list: React.ReactNode }) {
+export function HomeViews({
+  initial,
+  calendar,
+  list,
+  heading,
+  aside,
+  between,
+}: {
+  initial: View;
+  calendar: React.ReactNode;
+  list: React.ReactNode;
+  /** Left side of the header lane (date + "Hi Kata"). */
+  heading?: React.ReactNode;
+  /** Shown just left of the tabs (e.g. the Set-up guide link). */
+  aside?: React.ReactNode;
+  /** Full-width content between the header lane and the views (e.g. the Get set up card). */
+  between?: React.ReactNode;
+}) {
   const [view, setView] = useState<View>(initial);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -47,41 +64,48 @@ export function HomeViews({ initial, calendar, list }: { initial: View; calendar
   };
 
   return (
-    <div className="flex flex-col gap-3.5">
-      <div
-        role="tablist"
-        data-tour="views"
-        aria-label="Home view"
-        onKeyDown={onKeyDown}
-        className="inline-flex gap-1 self-start rounded-full bg-white p-1 shadow-[0_12px_40px_rgba(9,16,29,.06)]"
-      >
-        {TABS.map((t, i) => {
-          const on = view === t.key;
-          return (
-            <button
-              key={t.key}
-              ref={(el) => {
-                refs.current[i] = el;
-              }}
-              id={`tab-${t.key}`}
-              role="tab"
-              type="button"
-              aria-selected={on}
-              aria-controls={`panel-${t.key}`}
-              tabIndex={on ? 0 : -1}
-              onClick={() => select(t.key)}
-              className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border-0 px-[18px] text-sm font-semibold transition-colors ${
-                on
-                  ? "bg-p500 text-white shadow-[0_6px_16px_-8px_rgba(88,51,167,.8)]"
-                  : "bg-transparent text-ink-3 hover:bg-p100 hover:text-p500"
-              }`}
-            >
-              {t.icon}
-              {t.label}
-            </button>
-          );
-        })}
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+        {heading}
+        <div className="flex flex-wrap items-center gap-2">
+          {aside}
+          <div
+            role="tablist"
+            data-tour="views"
+            aria-label="Home view"
+            onKeyDown={onKeyDown}
+            className="inline-flex gap-1 rounded-full bg-white p-1 shadow-[0_12px_40px_rgba(9,16,29,.06)]"
+          >
+            {TABS.map((t, i) => {
+              const on = view === t.key;
+              return (
+                <button
+                  key={t.key}
+                  ref={(el) => {
+                    refs.current[i] = el;
+                  }}
+                  id={`tab-${t.key}`}
+                  role="tab"
+                  type="button"
+                  aria-selected={on}
+                  aria-controls={`panel-${t.key}`}
+                  tabIndex={on ? 0 : -1}
+                  onClick={() => select(t.key)}
+                  className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border-0 px-[18px] text-sm font-semibold transition-colors ${
+                    on
+                      ? "bg-p500 text-white shadow-[0_6px_16px_-8px_rgba(88,51,167,.8)]"
+                      : "bg-transparent text-ink-3 hover:bg-p100 hover:text-p500"
+                  }`}
+                >
+                  {t.icon}
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
+      {between}
       <div id="panel-cal" role="tabpanel" aria-labelledby="tab-cal" hidden={view !== "cal"}>
         {calendar}
       </div>

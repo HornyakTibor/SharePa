@@ -33,31 +33,42 @@ export default async function AppHome({ searchParams }: { searchParams: Promise<
   data.openOffers = offers;
   const first = data.me.name.split(" ")[0];
 
+  const heading = (
+    <div>
+      <p className="m-0 text-xs font-semibold uppercase tracking-[.08em] text-ink-3">{longDate(data.today)}</p>
+      <h1 className="mt-1 mb-0 text-[31px] font-semibold text-navy">Hi {first}</h1>
+    </div>
+  );
+  const guide = setupDone ? (
+    <Link href="/app/setup" data-tour="setup" className="rounded-full px-4 py-2 text-sm font-semibold text-p500 no-underline hover:bg-p100">
+      Set-up guide
+    </Link>
+  ) : null;
+  const setupCard = setupDone ? null : <div data-tour="setup"><SetupCard checks={setup.checks} /></div>;
+
   return (
     <div className="min-h-screen bg-canvas">
       <AppHeader name={data.me.name} notifications={data.notifications} />
       <main className="mx-auto flex max-w-[1232px] flex-col gap-6 px-4 pt-8 pb-24 sm:px-8">
         {data.me.isDemo && <DemoBar name={data.me.name} />}
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="m-0 text-xs font-semibold uppercase tracking-[.08em] text-ink-3">{longDate(data.today)}</p>
-            <h1 className="mt-1 mb-0 text-[31px] font-semibold text-navy">Hi {first}</h1>
-          </div>
-          {setupDone && (
-            <Link href="/app/setup" data-tour="setup" className="rounded-full px-4 py-2 text-sm font-semibold text-p500 no-underline hover:bg-p100">
-              Set-up guide
-            </Link>
-          )}
-        </div>
-        {!setupDone && <div data-tour="setup"><SetupCard checks={setup.checks} /></div>}
         {data.week.some((d) => d.items.length) ? (
           <HomeViews
             initial={view === "list" && !cal ? "list" : "cal"}
+            heading={heading}
+            aside={guide}
+            between={setupCard}
             calendar={<WeekCalendar data={data} />}
             list={<RidesCard data={data} />}
           />
         ) : (
-          <WeekCalendar data={data} />
+          <>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              {heading}
+              {guide}
+            </div>
+            {setupCard}
+            <WeekCalendar data={data} />
+          </>
         )}
         <Panels data={data} />
         <Tour autoStart={data.me.isDemo} />
