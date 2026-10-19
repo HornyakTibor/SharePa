@@ -18,7 +18,7 @@ export function Logo({ tone = "dark", href = "/" }: { tone?: "dark" | "light"; h
     <>
       <LogoMark />
       <span className={`text-[22px] font-extrabold tracking-[-0.5px] ${tone === "dark" ? "text-white" : "text-navy"}`}>
-        Share<span className={tone === "dark" ? "text-lavender" : "text-p500"}>Pa</span>
+        Share<span className={tone === "dark" ? "text-white" : "text-p500"}>Pa</span>
       </span>
     </>
   );
